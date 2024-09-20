@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	%sveltekit.head%
+</head>
+
+<body data-sveltekit-preload-data="hover">
+	<div style="display: contents">%sveltekit.body%</div>
+</body>
+
+</html>
+
+<style>
+	body {
+		scroll-behavior: none;
+		overflow: hidden;
+		margin: 0;
+		padding: 0;
+		height: 100vh;
+		font-family: Verdana, Geneva, Tahoma, sans-serif;
+		background: linear-gradient(90deg,
+
+				rgb(14, 220, 100) 0%,
+				rgba(33, 106, 189, 1) 60%,
+				rgba(189, 56, 255, 1) 100%);
+
+		/* Make the gradient repeat to create continuous movement */
+		background-size: 300% 300%;
+
+		/* Apply the animation */
+		animation: gradientMove 5s ease infinite alternate;
+
+		:global(input[type="password"]::-ms-clear,
+			input[type="password"]::-ms-reveal) {
+			/* display: none; */
+			appearance: none;
+			/* Disable the browser's native controls */
+			-webkit-appearance: none;
+			/* For Safari */
+			-moz-appearance: none;
+			/* For Firefox */
+			position: relative;
+		}
+	}
+
+	@keyframes gradientMove {
+		0% {
+			background-position: left;
+		}
+
+		100% {
+			background-position: right;
+		}
+	}
+</style>
