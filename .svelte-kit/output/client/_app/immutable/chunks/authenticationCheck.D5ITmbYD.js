@@ -1,0 +1,1 @@
+import{g as r}from"./entry.ChMssdJ8.js";import{a}from"./axios.B3ERvgox.js";const n=async o=>{if(o==="/login"||o==="/register")return"";try{const t=await a.get("/auth/account/user");return t.status!==200&&await r("/login"),t.data}catch(t){console.error("Failed to verify user token:",t),await r("/login")}};export{n as c};
