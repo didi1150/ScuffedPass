@@ -9,7 +9,7 @@ import {
 import axios from "axios";
 
 export const axiosInstance = axios.create({
-  baseURL: "/api/",
+  baseURL: import.meta.env.API_URL,
 });
 
 import * as jose from "jose";
