@@ -26,6 +26,7 @@
  * ```
  */
 declare module '$env/static/private' {
+	export const VITE_API_URL: string;
 	export const ALLUSERSPROFILE: string;
 	export const ANDROID_HOME: string;
 	export const APPDATA: string;
@@ -42,8 +43,6 @@ declare module '$env/static/private' {
 	export const EDITOR: string;
 	export const FIREBASE_AUTH_EMULATOR_HOST: string;
 	export const FIRESTORE_EMULATOR_HOST: string;
-	export const FPS_BROWSER_APP_PROFILE_STRING: string;
-	export const FPS_BROWSER_USER_PROFILE_STRING: string;
 	export const GIT_ASKPASS: string;
 	export const GOPATH: string;
 	export const HOME: string;
@@ -148,6 +147,7 @@ declare module '$env/static/public' {
  */
 declare module '$env/dynamic/private' {
 	export const env: {
+		VITE_API_URL: string;
 		ALLUSERSPROFILE: string;
 		ANDROID_HOME: string;
 		APPDATA: string;
@@ -164,8 +164,6 @@ declare module '$env/dynamic/private' {
 		EDITOR: string;
 		FIREBASE_AUTH_EMULATOR_HOST: string;
 		FIRESTORE_EMULATOR_HOST: string;
-		FPS_BROWSER_APP_PROFILE_STRING: string;
-		FPS_BROWSER_USER_PROFILE_STRING: string;
 		GIT_ASKPASS: string;
 		GOPATH: string;
 		HOME: string;

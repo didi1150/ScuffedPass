@@ -8,24 +8,31 @@
   let error = false;
 
   const handleSubmit = () => {
-    encryptData(masterPassword, getSalt(), password).then((value) => {
-      if (value === "ERROR") error = true;
-      else {
-        axiosInstance
-          .post("/vault", {
-            website,
-            email,
-            password: value.encryptedData,
-            iv: value.iv,
-          })
-          .then((res) => {
-            if (res.status === 200) {
-              isOpen = false;
-              invalidateAll();
+    axiosInstance
+      .get("/password-check", { data: masterPassword })
+      .then((response) => {
+        if (response.status === 200) {
+          encryptData(masterPassword, getSalt(), password).then((value) => {
+            if (value === "ERROR") error = true;
+            else {
+              axiosInstance
+                .post("/vault", {
+                  website,
+                  email,
+                  password: value.encryptedData,
+                  iv: value.iv,
+                })
+                .then((res) => {
+                  if (res.status === 200) {
+                    isOpen = false;
+                    invalidateAll();
+                  }
+                });
             }
           });
-      }
-    });
+        }
+      })
+      .catch(() => (error = true));
   };
   let email = "",
     password = "",
@@ -74,9 +81,15 @@
     /><label for="masterPassword">Master Password</label>
   </div>
   <button type="submit">Save</button>
+  {#if error}
+    <p class="error">Oops, something went wrong</p>
+  {/if}
 </form>
 
 <style>
+  .error {
+    color: red;
+  }
   form {
     display: flex;
     flex-direction: column;

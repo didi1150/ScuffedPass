@@ -29,24 +29,35 @@
       return;
     }
 
-    encryptData(masterPassword, getSalt(), password).then((value) => {
-      if (value === "ERROR")
-        error = "Something went wrong. Please try again later";
-      else {
-        axiosInstance
-          .patch("vault", {
-            id: passwordID,
-            iv: value.iv,
-            password: value.encryptedData,
-          })
-          .then((response) => {
-            if (response.status === 200) {
-              isOpen = false;
+    axiosInstance
+      .get("/password-check", {
+        data: masterPassword,
+      })
+      .then((response) => {
+        if (response.status === 200) {
+          encryptData(masterPassword, getSalt(), password).then((value) => {
+            if (value === "ERROR")
+              error = "Something went wrong. Please try again later";
+            else {
+              axiosInstance
+                .patch("vault", {
+                  id: passwordID,
+                  iv: value.iv,
+                  password: value.encryptedData,
+                })
+                .then((response) => {
+                  if (response.status === 200) {
+                    isOpen = false;
+                  }
+                })
+                .finally(() => invalidateAll());
             }
-          })
-          .finally(() => invalidateAll());
-      }
-    });
+          });
+        }
+      })
+      .catch(() => {
+        error = "The master password is incorrect.";
+      });
   };
 </script>
 
@@ -72,11 +83,14 @@
   </div>
   <button type="submit">Edit</button>
   {#if error.length != 0}
-    <h2 class="error">{error}</h2>
+    <p class="error">{error}</p>
   {/if}
 </form>
 
 <style>
+  .error {
+    color: red;
+  }
   form {
     display: flex;
     flex-direction: column;
@@ -126,5 +140,4 @@
     width: 200px;
     font-weight: 700;
   }
-
 </style>
