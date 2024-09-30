@@ -14,7 +14,7 @@
     class="yes"
     on:click={() => {
       axiosInstance
-        .delete(`/vault/${passwordID}`)
+        .delete(`/vault/${passwordID}`) 
         .then((response) => {
           if (response.status === 200) {
             isOpen = false;
