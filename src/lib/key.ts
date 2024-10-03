@@ -1,5 +1,20 @@
+import { hash } from "bcryptjs";
+import { genSalt } from "$lib/gensalt";
+
 const isBrowser =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
+export const hashMasterPassword = async (
+  email: string,
+  masterPassword: string
+) => {
+  const salt = await genSalt(email, masterPassword);
+  const hashPW = await hash(masterPassword, salt);
+  return {
+    hashPW,
+    salt,
+  };
+};
 
 const getNewKey = async (password: string, salt: string) => {
   if (isBrowser) {
@@ -13,7 +28,7 @@ const getNewKey = async (password: string, salt: string) => {
     );
     const params = {
       name: "PBKDF2",
-      salt: base64ToArrayBuffer(salt),
+      salt: await bcryptToArrayBuffer(salt),
       iterations: 100000,
       hash: "SHA-256",
     };
@@ -33,9 +48,9 @@ export const encryptData = async (
   data: string
 ) => {
   const key = await getNewKey(password, salt);
-  console.log("Salt: ", salt);
+  // console.log("Salt: ", salt);
   if (!key) return "ERROR";
-  console.log("Generated key: ", key);
+  // console.log("Generated key: ", key);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ivString = uint8ArrayToBase64(iv);
   const encryptedData = arrayBufferToBase64(
@@ -48,8 +63,8 @@ export const encryptData = async (
       new TextEncoder().encode(data)
     )
   );
-  console.log("ciphertext: ", encryptedData);
-  console.log("IvString: ", ivString);
+  // console.log("ciphertext: ", encryptedData);
+  // console.log("IvString: ", ivString);
   return {
     iv: ivString,
     encryptedData,
@@ -62,11 +77,11 @@ export const decryptData = async (
   data: string,
   iv: string
 ) => {
-  console.log("IV: ", iv, " Salt: ", salt);
+  // console.log("IV: ", iv, " Salt: ", salt);
   const key = await getNewKey(password, salt);
   if (!key) return "ERROR";
-  console.log("Generated key: ", key);
-  console.log("Ciphertext: ", data)
+  // console.log("Generated key: ", key);
+  // console.log("Ciphertext: ", data);
   const dataBuffer = base64ToArrayBuffer(data);
   const ivArray = base64ToUint8Array(iv);
   const decryptedData = await crypto.subtle.decrypt(
@@ -118,3 +133,21 @@ function base64ToUint8Array(base64: string) {
   }
   return uint8Array;
 }
+
+const bcryptToArrayBuffer = async (bcryptHash: string) => {
+  // Remove the bcrypt version and salt (first 29 characters)
+  const hashOnly = bcryptHash.slice(29);
+
+  // Decode the base64 string to get the raw bytes
+  const binaryString = atob(hashOnly);
+
+  // Create an ArrayBuffer from the binary string
+  const buffer = new ArrayBuffer(binaryString.length);
+  const view = new Uint8Array(buffer);
+
+  for (let i = 0; i < binaryString.length; i++) {
+    view[i] = binaryString.charCodeAt(i);
+  }
+
+  return buffer;
+};

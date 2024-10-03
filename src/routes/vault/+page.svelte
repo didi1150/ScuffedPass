@@ -4,7 +4,7 @@
   import MobileVault from "$lib/components/MobileVault.svelte";
   import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
   import Modal from "$lib/components/modals/Modal.svelte";
-  import VaultTable from "$lib/components/tables/VaultTable.svelte";
+  import DesktopVault from "$lib/components/DesktopVault.svelte";
   export let data = [];
 
   let openModal = false;
@@ -20,7 +20,7 @@
   <MobileVault tableData={data.passwords}></MobileVault>
 </MediaQuery>
 <MediaQuery query={desktopQuery}>
-  <VaultTable tableData={data.passwords}></VaultTable>
+  <DesktopVault tableData={data.passwords}></DesktopVault>
 </MediaQuery>
 <button class="add" on:click={() => (openModal = true)}>Add</button>
 <button class="back" on:click={() => goto("/")}

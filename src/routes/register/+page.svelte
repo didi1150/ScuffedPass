@@ -1,23 +1,27 @@
 <script lang="ts">
   import { invalidateAll, goto } from "$app/navigation";
   import { axiosInstance } from "$lib/interceptors/axios";
+  import { hashMasterPassword } from "$lib/key";
 
   let error = false;
 
   let email = "",
     password = "";
-  $: handleSubmit = () => {
+  $: handleSubmit = async () => {
     error = false;
+    const { hashPW, salt } = await hashMasterPassword(email, password);
     axiosInstance
       .post("auth/account/register", {
         email,
-        password,
+        password: hashPW,
+        salt,
       })
       .then((response) => {
         if (response.status === 200) goto("/login");
         else invalidateAll().then(() => (error = true));
       })
-      .catch(() => {
+      .catch((reason) => {
+        // console.error(reason);
         invalidateAll().then(() => (error = true));
       });
   };

@@ -6,7 +6,7 @@ export const load = async () => {
   // console.log("Loading Passwords...");
   try {
     const response = await axiosInstance.get<Password>("/vault");
-    console.log(response.data);
+    // console.log(response.data);
     const saltResponse = await axiosInstance.get("/auth/account/user/salt");
     if (response.data && Array.isArray(response.data) && saltResponse.data) {
       const responseArray = response.data.map((item: Password) => {
@@ -26,6 +26,5 @@ export const load = async () => {
     }
   } catch (error) {
     console.error("Failed to fetch passwords:", error);
-    goto("/login"); // Return an empty array in case of error
   }
 };

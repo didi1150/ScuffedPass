@@ -3,7 +3,7 @@
   import ConfirmWithPassword from "$lib/components/modals/content/ConfirmWithPassword.svelte";
   import ConfirmDelete from "$lib/components/modals/content/ConfirmDelete.svelte";
   import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
-  import EditPassword from "$lib/components/modals/content/EditPassword.svelte";
+  import EditPasswordDetails from "$lib/components/modals/content/EditPasswordDetails.svelte";
 
   export let tableData: Password[] = [];
 
@@ -23,8 +23,8 @@
     <ConfirmDelete bind:passwordID={selectedPasswordID} bind:isOpen
     ></ConfirmDelete>
   {:else if mode === "edit"}
-    <EditPassword bind:passwordID={selectedPasswordID} bind:isOpen
-    ></EditPassword>
+    <EditPasswordDetails bind:passwordID={selectedPasswordID} bind:isOpen
+    ></EditPasswordDetails>
   {:else if mode === "add"}
     <AddPassword></AddPassword>
   {/if}
@@ -115,6 +115,11 @@
           </tr>
         {/each}
       </tbody>
+      {#if tableData.length == 0}
+        <div class="empty">
+          <span>Nothing to show here</span>
+        </div>
+      {/if}
     </table>
   </div>
 </div>
@@ -156,6 +161,17 @@
     top: 0;
     background: blur(15);
     background-color: rgb(60, 68, 97);
+  }
+
+  .empty {
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .empty span {
+    opacity: 50%;
   }
 
   button {

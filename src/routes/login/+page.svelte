@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto, invalidateAll } from "$app/navigation";
   import { axiosInstance } from "$lib/interceptors/axios";
+  import { hashMasterPassword } from "$lib/key";
   import { refreshToken, salt, token } from "$lib/session";
   let email = "",
     password = "";
@@ -9,14 +10,14 @@
 
   $: handleSubmit = async () => {
     error = false;
+    const { hashPW } = await hashMasterPassword(email, password);
     axiosInstance
       .post("auth/account/authenticate", {
         email,
-        password,
+        password: hashPW,
       })
       .then((res) => {
         if (res.status === 200) {
-          console.log(res.data.salt);
           token.set(res.data.access_token);
           refreshToken.set(res.data.refresh_token);
           salt.set(res.data.salt);
@@ -26,6 +27,7 @@
         }
       })
       .catch((reason) => {
+        // console.error(reason);
         invalidateAll().then(() => (error = true));
       });
   };

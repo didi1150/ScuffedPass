@@ -68,7 +68,7 @@
     cursor: pointer;
   }
 
-  @media(max-width: 360px) {
+  @media (max-width: 360px) {
     .container {
       text-wrap: wrap;
     }

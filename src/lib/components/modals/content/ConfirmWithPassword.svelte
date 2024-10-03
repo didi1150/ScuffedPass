@@ -26,7 +26,6 @@
   const copy = () => {
     navigator.clipboard.writeText(revealed).then(() => {
       tooltipVisible = true;
-      console.log(tooltipVisible);
       // Hide tooltip after 2 seconds
       clearTimeout(tooltipTimeout);
       tooltipTimeout = setTimeout(() => {

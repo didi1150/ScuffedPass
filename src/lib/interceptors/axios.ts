@@ -6,88 +6,107 @@ import {
   setSalt,
   setToken,
 } from "$lib/session";
-import axios from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+import * as jose from "jose";
 
 export const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-import * as jose from "jose";
-
 axiosInstance.defaults.headers.common[
   "Authorization"
 ] = `Bearer ${readToken()}`;
 
-// const createAxiosResponseInterceptor = () => {
-//   const interceptor = axiosInstance.interceptors.response.use(
-//     (resp) => resp,
-//     (error) => {
-//       axiosInstance.interceptors.response.eject(interceptor);
-//       if (error.response.status === 403) {
-//         axiosInstance.defaults.headers.common[
-//           "Authorization"
-//         ] = `Bearer ${getRefreshToken()}`;
-//         axiosInstance
-//           .post("auth/account/refresh-token")
-//           .then((response) => {
-//             if (response.status === 200) {
-//               axiosInstance.defaults.headers.common[
-//                 "Authorization"
-//               ] = `Bearer ${response.data.access_token}`;
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
 
-//               // axiosInstance.post("auth/account/token-auth");
-//               setToken(response.data.access_token);
-//               setSalt(response.data.salt);
-//               setRefreshToken(response.data.refresh_token);
-//               return axiosInstance(response.data.config);
-//             }
-//           })
-//           .catch((error2) => {
-//             setToken("");
-//             setRefreshToken("");
-//             redirect(300, "/login");
-//             return Promise.reject(error2);
-//           })
-//           .finally(createAxiosResponseInterceptor);
-//       }
-//     }
-//   );
-// };
-// createAxiosResponseInterceptor();
+const refreshTokenIfNeeded = async (): Promise<string | null> => {
+  try {
+    const response = await axiosInstance.post(
+      "auth/account/refresh-token",
+      {},
+      { headers: { Authorization: `Bearer ${getRefreshToken()}` } }
+    );
+    if (response.status === 200) {
+      setToken(response.data.access_token);
+      setSalt(response.data.salt);
+      setRefreshToken(response.data.refresh_token);
+      invalidateAll();
+      return response.data.access_token;
+    }
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+    setToken("");
+    setSalt("");
+    setRefreshToken("");
+    invalidateAll();
+  }
+  return null;
+};
 
-const createAxiosRequestInterceptor = () => {
-  axiosInstance.interceptors.request.use(async (req) => {
-    if (req.url?.includes("refresh-token")) return req;
+const processQueue = (token: string | null) => {
+  refreshSubscribers.forEach((callback) => callback(token as string));
+  refreshSubscribers = [];
+};
+
+const createAxiosInterceptors = () => {
+  axiosInstance.interceptors.request.use(async (config) => {
+    if (config.url?.includes("refresh-token")) return config;
     let token = readToken();
-    if (!token) return req;
+    if (!token || token.length < 10) return config;
+
     const { exp } = jose.decodeJwt(token);
 
     if (exp) {
       const currentTime = Math.floor(Date.now() / 1000);
       if (exp < currentTime) {
-        console.log("Token has expired");
-
-        const response = await axiosInstance.post(
-          "auth/account/refresh-token",
-          {},
-          { headers: { Authorization: `Bearer ${getRefreshToken()}` } }
-        );
-        if (response.status !== 200) {
-          setToken("");
-          setSalt("");
-          setRefreshToken("");
-          return req;
+        const newToken = await refreshTokenIfNeeded();
+        if (newToken) {
+          config.headers.Authorization = `Bearer ${newToken}`;
         }
-        console.log(response);
-        setToken(response.data.access_token);
-        setSalt(response.data.salt);
-        setRefreshToken(response.data.refresh_token);
-        invalidateAll();
+      } else {
+        config.headers.Authorization = `Bearer ${token}`;
       }
     }
-    req.headers.Authorization = `Bearer ${token}`;
-    return req;
+    return config;
   });
+
+  axiosInstance.interceptors.response.use(
+    (response) => response,
+    async (error: AxiosError) => {
+      const originalRequest = error.config as InternalAxiosRequestConfig & {
+        _retry?: boolean;
+      };
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        if (isRefreshing) {
+          return new Promise((resolve) => {
+            refreshSubscribers.push((token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(axiosInstance(originalRequest));
+            });
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const newToken = await refreshTokenIfNeeded();
+          if (newToken) {
+            processQueue(newToken);
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return axiosInstance(originalRequest);
+          }
+        } catch (refreshError) {
+          processQueue(null);
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
 };
 
-createAxiosRequestInterceptor();
+createAxiosInterceptors();
