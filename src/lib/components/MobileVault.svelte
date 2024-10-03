@@ -31,6 +31,11 @@
 
 <div class="anchor">
   <ul>
+    {#if tableData.length == 0}
+      <div class="empty">
+        <span>Nothing to show here</span>
+      </div>
+    {/if}
     {#each tableData as row}
       <li>
         <div class="details">
@@ -111,6 +116,7 @@
     align-items: center;
     height: 100%;
   }
+
   ul {
     margin: 0;
     padding: 0;
@@ -124,6 +130,22 @@
 
     scrollbar-width: thin;
     scrollbar-color: white rgba(0, 0, 0, 0);
+  }
+
+  .empty {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .empty span {
+    font-size: 1.5em;
+    color: white;
+    opacity: 50%;
+    word-break: break-all;
   }
 
   ul li {
