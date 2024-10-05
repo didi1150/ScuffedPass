@@ -4,7 +4,7 @@
   import { hashMasterPassword } from "$lib/key";
 
   let error = false;
-
+  let success = false;
   let email = "",
     password = "";
   $: handleSubmit = async () => {
@@ -16,9 +16,8 @@
         password: hashPW,
         salt,
       })
-      .then((response) => {
-        if (response.status === 200) goto("/login");
-        else invalidateAll().then(() => (error = true));
+      .then(() => {
+        success = true;
       })
       .catch((reason) => {
         // console.error(reason);
@@ -77,6 +76,9 @@
       </p>
       {#if error}
         <p class="error">Please try again</p>
+      {/if}
+      {#if success}
+        <p class="success">Check your email for a confirmation link</p>
       {/if}
     </form>
   </div>
@@ -178,6 +180,11 @@
   .error {
     font-size: 0.9em;
     color: red;
+    text-align: center;
+  }
+
+  .success {
+    color: lime;
     text-align: center;
   }
 
