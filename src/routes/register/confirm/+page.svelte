@@ -3,7 +3,7 @@
 </script>
 
 <div>
-    {#if data.success}
+    {#if !data.success}
         <h2>Oops something went wrong. Your token might have expired</h2>
     {:else}
         <h2>
