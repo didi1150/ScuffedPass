@@ -6,6 +6,9 @@
 	"/register": [
 		"src/routes/register/+page.ts"
 	],
+	"/register/confirm": [
+		"src/routes/register/confirm/+page.ts"
+	],
 	"/vault": [
 		"src/routes/vault/+page.ts"
 	]
