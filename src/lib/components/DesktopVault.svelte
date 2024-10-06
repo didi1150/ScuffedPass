@@ -1,6 +1,6 @@
 <script lang="ts">
   import Modal from "$lib/components/modals/Modal.svelte";
-  import ConfirmWithPassword from "$lib/components/modals/content/ConfirmWithPassword.svelte";
+  import ConfirmWithPassword from "$lib/components/modals/content/RevealPassword.svelte";
   import ConfirmDelete from "$lib/components/modals/content/ConfirmDelete.svelte";
   import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
   import EditPasswordDetails from "$lib/components/modals/content/EditPasswordDetails.svelte";
