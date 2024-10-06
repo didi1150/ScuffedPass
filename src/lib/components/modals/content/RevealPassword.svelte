@@ -80,10 +80,7 @@
 {/if}
 
 {#if error}
-  <p>
-    An error occured whilst trying to decrypt the password. Please try again
-    after reloading the page
-  </p>
+  <p>Please enter the correct master password.</p>
 {/if}
 
 <style>
