@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { decryptData, hashMasterPassword } from "$lib/key";
+  import { hashMasterPassword } from "$lib/key";
   import InputBox from "$lib/components/InputBox.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
 
@@ -34,19 +34,6 @@
           Array.isArray(response.data) &&
           saltResponse.data
         ) {
-          const passwords = response.data.map((item: Password) => {
-            return {
-              websiteURL: item.websiteURL,
-              email: item.email,
-              password: item.password,
-              iv: item.iv,
-              passwordID: item.passwordID,
-            };
-          });
-
-          passwords.forEach((item) => {
-            decryptData(currentMasterPassword, saltResponse.data);
-          });
         } else {
         }
       }
