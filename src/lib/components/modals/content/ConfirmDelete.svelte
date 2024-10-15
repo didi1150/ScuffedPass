@@ -1,26 +1,21 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
-  import { axiosInstance } from "$lib/interceptors/axios";
 
-  export let passwordID: number;
   export let isOpen: boolean;
+
+  export let question: string;
+  export let deleteFunction;
 
   let error = false;
 </script>
 
-<h2>Do you want to delete this password?</h2>
+<h2>{question}</h2>
 <div class="buttons">
   <button
     class="yes"
     on:click={() => {
-      axiosInstance
-        .delete(`/vault/${passwordID}`) 
-        .then((response) => {
-          if (response.status === 200) {
-            isOpen = false;
-          }
-        })
-        .finally(() => invalidateAll());
+      deleteFunction();
+      invalidateAll();
     }}>Yes</button
   >
   <button class="no" on:click={() => (isOpen = false)}>No</button>

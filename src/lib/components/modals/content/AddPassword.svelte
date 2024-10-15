@@ -46,17 +46,27 @@
 
 <form on:submit|preventDefault={handleSubmit}>
   <h2>Add Password</h2>
-  <InputBox bind:value={website} id="website" label="Enter a Website" required={true}
+  <InputBox
+    bind:value={website}
+    id="website"
+    label="Enter a Website"
+    required={true}
   ></InputBox>
   <InputBox bind:value={email} id="email" label="Enter an Email" required={true}
   ></InputBox>
-  <InputBox bind:value={password} id="password" label="Enter a Password" required={true}
+  <InputBox
+    bind:value={password}
+    id="password"
+    label="Enter a Password"
+    required={true}
+    type="password"
   ></InputBox>
   <InputBox
     bind:value={masterPassword}
     id="masterPassword"
     label="Enter your Master Password"
     required={true}
+    type="password"
   ></InputBox>
   <button type="submit">Save</button>
   {#if error}

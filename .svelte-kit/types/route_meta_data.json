@@ -1,5 +1,16 @@
 {
+	"/(authed)/(admin)": [
+		"src/routes/(authed)/(admin)/+layout.ts",
+		"src/routes/(authed)/+layout.ts"
+	],
+	"/(authed)": [
+		"src/routes/(authed)/+layout.ts",
+		"src/routes/(authed)/+layout.ts"
+	],
 	"/": [],
+	"/confirmlock": [
+		"src/routes/confirmlock/+page.ts"
+	],
 	"/login": [
 		"src/routes/login/+page.ts"
 	],
@@ -9,7 +20,16 @@
 	"/register/confirm": [
 		"src/routes/register/confirm/+page.ts"
 	],
-	"/vault": [
-		"src/routes/vault/+page.ts"
+	"/requestlock": [
+		"src/routes/requestlock/+page.ts"
+	],
+	"/(authed)/(admin)/users": [
+		"src/routes/(authed)/(admin)/users/+page.ts",
+		"src/routes/(authed)/(admin)/+layout.ts",
+		"src/routes/(authed)/+layout.ts"
+	],
+	"/(authed)/vault": [
+		"src/routes/(authed)/vault/+page.ts",
+		"src/routes/(authed)/+layout.ts"
 	]
 }

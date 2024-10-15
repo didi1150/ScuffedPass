@@ -5,10 +5,13 @@
   import { checkToken } from "$lib/interceptors/authenticationCheck";
   import { page } from "$app/stores";
   import { setRefreshToken, setSalt, setToken } from "$lib/session";
+  import { hasRole } from "$lib/roles";
 
   $: currentUrl = $page.url.pathname;
 
   let message = "You are not logged in";
+
+  $: isAdmin = hasRole("admin");
 
   onMount(async () => {
     message = "Welcome, " + (await checkToken(currentUrl));
@@ -32,6 +35,9 @@
   <div class="controls">
     <button class="vault" on:click={() => goto("/vault")}>Vault</button>
     <button class="logout" on:click={logout}>Logout</button>
+    {#if isAdmin}
+      <button class="users" on:click={() => goto("/users")}>Users</button>
+    {/if}
   </div>
 </div>
 

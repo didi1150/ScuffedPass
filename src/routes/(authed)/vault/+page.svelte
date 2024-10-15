@@ -5,7 +5,7 @@
   import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
   import Modal from "$lib/components/modals/Modal.svelte";
   import DesktopVault from "$lib/components/DesktopVault.svelte";
-  export let data = [];
+  export let data: {passwords: Password[]} = [];
 
   let openModal = false;
 

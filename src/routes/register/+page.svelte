@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { invalidateAll, goto } from "$app/navigation";
+  import { invalidateAll } from "$app/navigation";
   import { axiosInstance } from "$lib/interceptors/axios";
   import { hashMasterPassword } from "$lib/key";
 

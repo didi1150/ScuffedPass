@@ -82,6 +82,7 @@
       <p class="register-link">
         Don't have an account? <a href="register">Register</a>
       </p>
+      <a class="lock" href="/requestlock">Lock account</a>
       {#if error}
         <p class="error">Please try again</p>
       {/if}
@@ -179,6 +180,14 @@
     font-size: 0.9em;
     color: red;
     text-align: center;
+  }
+
+  .lock {
+    transform: translateY(-50%);
+    margin-left: 33%;
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
   }
 
   .register-link a {

@@ -4,6 +4,8 @@
   import ConfirmDelete from "$lib/components/modals/content/ConfirmDelete.svelte";
   import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
   import EditPasswordDetails from "$lib/components/modals/content/EditPasswordDetails.svelte";
+  import { axiosInstance } from "$lib/interceptors/axios";
+  import { invalidateAll } from "$app/navigation";
   export let tableData: Password[] = [];
 
   let isOpen = false;
@@ -19,7 +21,19 @@
   {#if mode === "reveal"}
     <ConfirmWithPassword bind:data bind:iv></ConfirmWithPassword>
   {:else if mode === "delete"}
-    <ConfirmDelete bind:passwordID={selectedPasswordID} bind:isOpen
+    <ConfirmDelete
+      deleteFunction={() => {
+        axiosInstance
+          .delete(`/vault/${selectedPasswordID}`)
+          .then((response) => {
+            if (response.status === 200) {
+              isOpen = false;
+            }
+          })
+          .finally(() => invalidateAll());
+      }}
+      question="Do you want to delete this password?"
+      bind:isOpen
     ></ConfirmDelete>
   {:else if mode === "edit"}
     <EditPasswordDetails bind:passwordID={selectedPasswordID} bind:isOpen

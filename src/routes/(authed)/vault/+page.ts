@@ -25,6 +25,7 @@ export const load = async () => {
       };
     }
   } catch (error) {
-    console.error("Failed to fetch passwords:", error);
+    // console.error("Failed to fetch passwords:", error);
+    goto("/login"); // Return an empty array in case of error
   }
 };
