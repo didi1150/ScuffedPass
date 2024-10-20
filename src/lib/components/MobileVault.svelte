@@ -1,7 +1,7 @@
 <script lang="ts">
   import Modal from "$lib/components/modals/Modal.svelte";
   import ConfirmWithPassword from "$lib/components/modals/content/RevealPassword.svelte";
-  import ConfirmDelete from "$lib/components/modals/content/ConfirmDelete.svelte";
+  import ConfirmAction from "$lib/components/modals/content/ConfirmAction.svelte";
   import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
   import EditPasswordDetails from "$lib/components/modals/content/EditPasswordDetails.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
@@ -19,10 +19,11 @@
 
 <Modal bind:isOpen>
   {#if mode === "reveal"}
-    <ConfirmWithPassword bind:data bind:iv></ConfirmWithPassword>
+    <ConfirmWithPassword bind:data passwordIV={iv}></ConfirmWithPassword>
   {:else if mode === "delete"}
-    <ConfirmDelete
-      deleteFunction={() => {
+    <ConfirmAction
+      errorMessage="Couldn't delete this password"
+      callback={() => {
         axiosInstance
           .delete(`/vault/${selectedPasswordID}`)
           .then((response) => {
@@ -34,7 +35,7 @@
       }}
       question="Do you want to delete this password?"
       bind:isOpen
-    ></ConfirmDelete>
+    ></ConfirmAction>
   {:else if mode === "edit"}
     <EditPasswordDetails bind:passwordID={selectedPasswordID} bind:isOpen
     ></EditPasswordDetails>

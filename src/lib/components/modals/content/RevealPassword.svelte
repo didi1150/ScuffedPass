@@ -1,10 +1,14 @@
 <script lang="ts">
-  import { decryptData } from "$lib/key";
-  import { salt } from "$lib/session";
-  import { get } from "svelte/store";
+  import { axiosInstance } from "$lib/interceptors/axios";
+  import {
+    decryptPassword,
+    decryptPrivateKey,
+    decryptSymmetricKeyWithPrivateKey,
+    hashMasterPassword,
+  } from "$lib/key";
 
   export let data;
-  export let iv;
+  export let passwordIV;
 
   let password = "";
   let revealed = "N/A";
@@ -12,14 +16,35 @@
   let tooltipVisible = false;
   let tooltipTimeout: number;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     error = false;
-    decryptData(password, get(salt), data, iv)
-      .then((value) => {
-        revealed = value;
-      })
-      .catch((reason) => {
-        error = true;
+
+    const email = (await axiosInstance.get("/auth/account/user")).data;
+    const { hashPW, salt } = await hashMasterPassword(email, password);
+    axiosInstance
+      .post("/auth/account/user/encryptionKey", { hash: hashPW })
+      .then((response) => {
+        if (response.status === 200) {
+          const { encryptionKey, privateKeyMaster, iv } = response.data;
+          decryptPrivateKey(privateKeyMaster, password, salt, iv)
+            .then((decryptedPrivateKey) => {
+              decryptSymmetricKeyWithPrivateKey(
+                encryptionKey,
+                decryptedPrivateKey
+              ).then((symmetricKey) => {
+                decryptPassword(data, passwordIV, symmetricKey).then(
+                  (value) => {
+                    if (!value) error = true;
+                    else {
+                      revealed = value;
+                    }
+                  }
+                );
+              });
+            })
+
+            .catch(() => (error = true));
+        }
       });
   };
 
@@ -112,7 +137,7 @@
   }
 
   .reveal-box input {
-    width: 85%;
+    width: 100%;
     height: 50px;
     background: transparent;
     border: none;

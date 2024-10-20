@@ -16,7 +16,7 @@
 <style>
   .input-box {
     position: relative;
-    width: 90%;
+    width: 100%;
     margin: 30px 0px;
     border-bottom: 2px solid white;
   }
@@ -26,7 +26,7 @@
     top: 50%;
     left: 5px;
     transform: translateY(-50%);
-    font-size: 1em;
+    font-size: 1.25em;
     color: white;
     pointer-events: none;
     transition: 0.5s;
@@ -43,7 +43,7 @@
     background: transparent;
     border: none;
     outline: none;
-    font-size: 1em;
+    font-size: 1.25em;
     color: white;
     padding: 0 0 0 5px;
   }

@@ -4,15 +4,15 @@
   export let data;
 
   let email = "";
-  let success = true;
+  let status: "pending" | "success" | "fail" = "pending";
   const handleSubmit = async () => {
     const result = await axiosInstance.get(
       `/auth/account/requestlock?email=${email}`
     );
     if (result.status === 200) {
-      success = true;
+      status = "success";
     } else {
-      success = false;
+      status = "fail";
     }
   };
 </script>
@@ -32,9 +32,9 @@
       </div>
       <button type="submit">Get the link</button>
 
-      {#if !success}
+      {#if status === "fail"}
         <p>User does not exist</p>
-      {:else}
+      {:else if status === "success"}
         <p>Check your email</p>
       {/if}
     </form>

@@ -1,9 +1,14 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
   import { axiosInstance } from "$lib/interceptors/axios";
-  import { encryptData, hashMasterPassword } from "$lib/key";
-  import { getSalt } from "$lib/session";
+  import {
+    decryptPrivateKey,
+    decryptSymmetricKeyWithPrivateKey,
+    encryptPassword,
+    hashMasterPassword,
+  } from "$lib/key";
   import InputBox from "$lib/components/InputBox.svelte";
+  import { salt } from "$lib/session";
 
   export let passwordID: number;
   export let isOpen: boolean;
@@ -36,37 +41,42 @@
     }
 
     const username = (await axiosInstance.get("/auth/account/user")).data;
-    const { hashPW } = await hashMasterPassword(username, masterPassword);
+    const { hashPW, salt } = await hashMasterPassword(username, masterPassword);
     axiosInstance
-      .post("/auth/account/user/password-check", {
-        masterPassword: hashPW,
-      })
+      .post("/auth/account/user/encryptionKey", { hash: hashPW })
       .then((response) => {
         if (response.status === 200) {
-          encryptData(masterPassword, getSalt(), password).then((value) => {
-            if (value === "ERROR")
-              error = "Something went wrong. Please try again later";
-            else {
-              axiosInstance
-                .patch("vault", {
-                  id: passwordID,
-                  iv: value.iv,
-                  password: value.encryptedData,
-                  website,
-                  email,
-                })
-                .then((response) => {
-                  if (response.status === 200) {
-                    isOpen = false;
+          const { encryptionKey, privateKeyMaster, iv } = response.data;
+          decryptPrivateKey(privateKeyMaster, masterPassword, salt, iv)
+            .then((decryptedPrivateKey) => {
+              decryptSymmetricKeyWithPrivateKey(
+                encryptionKey,
+                decryptedPrivateKey
+              ).then((symmetricKey) => {
+                encryptPassword(password, symmetricKey).then((value) => {
+                  if (!value) error = "The master password is incorrect";
+                  else {
+                    axiosInstance
+                      .patch("/vault", {
+                        id: passwordID,
+                        website,
+                        email,
+                        password: value.encryptedPassword,
+                        iv: value.iv,
+                      })
+                      .then((res) => {
+                        if (res.status === 200) {
+                          isOpen = false;
+                          invalidateAll();
+                        }
+                      });
                   }
-                })
-                .finally(() => invalidateAll());
-            }
-          });
+                });
+              });
+            })
+
+            .catch(() => (error = "The master password is incorrect"));
         }
-      })
-      .catch(() => {
-        error = "The master password is incorrect.";
       });
   };
 </script>
@@ -136,7 +146,7 @@
   button {
     margin: 20px 0;
     cursor: pointer;
-    font-size: 1em;
+    font-size: 1.5em;
     padding: 10px 15px;
     border: none;
     border-radius: 20px;

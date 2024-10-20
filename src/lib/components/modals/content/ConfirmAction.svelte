@@ -4,7 +4,8 @@
   export let isOpen: boolean;
 
   export let question: string;
-  export let deleteFunction;
+  export let errorMessage: string;
+  export let callback;
 
   let error = false;
 </script>
@@ -14,14 +15,14 @@
   <button
     class="yes"
     on:click={() => {
-      deleteFunction();
+      callback();
       invalidateAll();
     }}>Yes</button
   >
   <button class="no" on:click={() => (isOpen = false)}>No</button>
 </div>
 {#if error}
-  <p>Couldn't delete the password</p>
+  <p>{errorMessage}</p>
 {/if}
 
 <style>

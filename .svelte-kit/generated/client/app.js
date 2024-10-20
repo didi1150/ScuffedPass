@@ -12,7 +12,8 @@ export const nodes = [
 	() => import('./nodes/8'),
 	() => import('./nodes/9'),
 	() => import('./nodes/10'),
-	() => import('./nodes/11')
+	() => import('./nodes/11'),
+	() => import('./nodes/12')
 ];
 
 export const server_loads = [];
@@ -24,6 +25,7 @@ export const dictionary = {
 		"/register": [9],
 		"/register/confirm": [10],
 		"/requestlock": [11],
+		"/resetpw": [12],
 		"/(authed)/(admin)/users": [5,[2,3]],
 		"/(authed)/vault": [6,[2]]
 	};

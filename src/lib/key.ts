@@ -16,7 +16,15 @@ export const hashMasterPassword = async (
   };
 };
 
-const getNewKey = async (password: string, salt: string) => {
+/**
+ * @param password Non hashed plaintext master password
+ * @param salt Salt generated using user's master password and email
+ *
+ */
+export const deriveMasterKeyFromPassword = async (
+  password: string,
+  salt: string
+) => {
   if (isBrowser) {
     const enc = new TextEncoder();
     const baseKey = await crypto.subtle.importKey(
@@ -40,59 +48,7 @@ const getNewKey = async (password: string, salt: string) => {
       ["encrypt", "decrypt"]
     );
   }
-};
-
-export const encryptData = async (
-  password: string,
-  salt: string,
-  data: string
-) => {
-  const key = await getNewKey(password, salt);
-  // console.log("Salt: ", salt);
-  if (!key) return "ERROR";
-  // console.log("Generated key: ", key);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ivString = uint8ArrayToBase64(iv);
-  const encryptedData = arrayBufferToBase64(
-    await crypto.subtle.encrypt(
-      {
-        name: "AES-GCM",
-        iv,
-      },
-      key,
-      new TextEncoder().encode(data)
-    )
-  );
-  // console.log("ciphertext: ", encryptedData);
-  // console.log("IvString: ", ivString);
-  return {
-    iv: ivString,
-    encryptedData,
-  };
-};
-
-export const decryptData = async (
-  password: string,
-  salt: string,
-  data: string,
-  iv: string
-) => {
-  // console.log("IV: ", iv, " Salt: ", salt);
-  const key = await getNewKey(password, salt);
-  if (!key) return "ERROR";
-  // console.log("Generated key: ", key);
-  // console.log("Ciphertext: ", data);
-  const dataBuffer = base64ToArrayBuffer(data);
-  const ivArray = base64ToUint8Array(iv);
-  const decryptedData = await crypto.subtle.decrypt(
-    {
-      name: "AES-GCM",
-      iv: ivArray,
-    },
-    key,
-    dataBuffer
-  );
-  return new TextDecoder().decode(decryptedData);
+  return "";
 };
 
 const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
@@ -150,4 +106,316 @@ const bcryptToArrayBuffer = async (bcryptHash: string) => {
   }
 
   return buffer;
+};
+
+//-----------------------------------------------------------------------------------------------
+
+export const generateKeyPair = async () => {
+  const keyPair = await crypto.subtle.generateKey(
+    {
+      name: "RSA-OAEP",
+      modulusLength: 2048, // Can also be 3072 or 4096 for higher security
+      publicExponent: new Uint8Array([1, 0, 1]), // Standard exponent for RSA keys
+      hash: { name: "SHA-256" }, // Hashing algorithm used in RSA-OAEP
+    },
+    true, // Key is extractable
+    ["encrypt", "decrypt"] // Usage for encrypting and decrypting
+  );
+
+  const publicKey = await crypto.subtle.exportKey("spki", keyPair.publicKey);
+  const privateKey = await crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+
+  return {
+    publicKey: arrayBufferToBase64(publicKey),
+    privateKey: arrayBufferToBase64(privateKey),
+  };
+};
+
+export const generateRecoveryKey = () => {
+  const recoveryKey = crypto.getRandomValues(new Uint8Array(32)); // 256-bit recovery key
+  return uint8ArrayToBase64(recoveryKey);
+};
+
+export const deriveKeyFromRecoveryKey = async (
+  recoveryKeyBase64: string,
+  salt: string,
+  iterations: number = 100000
+): Promise<CryptoKey> => {
+  // Decode the base64 recovery key to a Uint8Array
+  const recoveryKeyBytes = base64ToUint8Array(recoveryKeyBase64);
+
+  // Import the decoded recovery key as a raw key for PBKDF2
+  const baseKey = await crypto.subtle.importKey(
+    "raw",
+    recoveryKeyBytes, // Raw recovery key data
+    "PBKDF2", // Algorithm used to derive the key
+    false, // The key is not extractable
+    ["deriveKey"] // We only allow deriving keys from this
+  );
+
+  // Derive the AES-GCM key from the baseKey using PBKDF2 and salt
+  const derivedKey = await crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: new TextEncoder().encode(salt), // Salt as Uint8Array
+      iterations: iterations,
+      hash: "SHA-256", // Hashing algorithm
+    },
+    baseKey, // The base key derived from recoveryKey
+    {
+      name: "AES-GCM", // Output key type (AES-GCM)
+      length: 256, // Key length in bits
+    },
+    false, // The key is not extractable for security
+    ["encrypt", "decrypt"] // Usages: encryption and decryption
+  );
+
+  return derivedKey;
+};
+
+export const encryptPrivateKey = async (
+  privateKey: string,
+  masterPassword: string,
+  recoveryKey: string,
+  salt: string
+) => {
+  // Derive a key from the master password
+  const masterKey = await deriveMasterKeyFromPassword(masterPassword, salt);
+
+  if (!masterKey) return "";
+
+  // Derive a key from the recovery key
+  const recoveryDerivedKey = await deriveKeyFromRecoveryKey(recoveryKey, salt);
+  if (!recoveryDerivedKey) return "";
+
+  // Encrypt the private key using AES-GCM
+  const iv = crypto.getRandomValues(new Uint8Array(12)); // Initialization vector
+  const privateKeyBuffer = base64ToArrayBuffer(privateKey);
+
+  // Encrypt the private key with master key
+  const masterEncryptedPrivateKey = await crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv,
+    },
+    masterKey,
+    privateKeyBuffer
+  );
+
+  // Encrypt the result again with recovery key
+  const recoveryEncryptedPrivateKey = await crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv,
+    },
+    recoveryDerivedKey,
+    privateKeyBuffer
+  );
+
+  return {
+    iv: uint8ArrayToBase64(iv),
+    masterEncryptedPrivateKey: arrayBufferToBase64(masterEncryptedPrivateKey),
+    recoveryEncryptedPrivateKey: arrayBufferToBase64(
+      recoveryEncryptedPrivateKey
+    ),
+  };
+};
+export const decryptPrivateKey = async (
+  encryptedData: string,
+  masterPassword: string,
+  salt: string,
+  iv: string
+) => {
+  const derivedKey = await deriveMasterKeyFromPassword(masterPassword, salt);
+  if (!derivedKey) return "";
+
+  try {
+    const decryptedPrivateKey = await crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: base64ToUint8Array(iv),
+      },
+      derivedKey,
+      base64ToArrayBuffer(encryptedData)
+    );
+
+    return arrayBufferToBase64(decryptedPrivateKey); // The decrypted private key in Base64
+  } catch (error) {
+    console.error("Failed to decrypt the private key:", error);
+    return "";
+  }
+};
+
+export const decryptPrivateKeyWithRecoveryKey = async (
+  encryptedData: string,
+  recoveryKey: string,
+  salt: string,
+  iv: string
+) => {
+  const derivedKey = await deriveKeyFromRecoveryKey(recoveryKey, salt);
+  if (!derivedKey) return "";
+
+  try {
+    const decryptedPrivateKey = await crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: base64ToUint8Array(iv),
+      },
+      derivedKey,
+      base64ToArrayBuffer(encryptedData)
+    );
+
+    return arrayBufferToBase64(decryptedPrivateKey); // The decrypted private key in Base64
+  } catch (error) {
+    console.error("Failed to decrypt the private key:", error);
+    return "";
+  }
+};
+
+// Generates a symmetric key for encrypting passwords
+export const generateSymmetricKey = async () => {
+  const symmetricKey = await crypto.subtle.generateKey(
+    {
+      name: "AES-GCM", // AES-GCM for strong encryption
+      length: 256, // 256-bit key
+    },
+    true, // Extractable, so we can encrypt it with the user's public/private key pair
+    ["encrypt", "decrypt"]
+  );
+
+  const exportedSymmetricKey = await crypto.subtle.exportKey(
+    "raw",
+    symmetricKey
+  );
+  return arrayBufferToBase64(exportedSymmetricKey); // Export key as Base64
+};
+
+// Encrypts the symmetric key with the user's public key (RSA-OAEP)
+export const encryptSymmetricKeyWithPublicKey = async (
+  symmetricKeyBase64: string,
+  publicKeyBase64: string
+) => {
+  const symmetricKeyBuffer = base64ToArrayBuffer(symmetricKeyBase64);
+  const publicKeyBuffer = base64ToArrayBuffer(publicKeyBase64);
+
+  // Import public key
+  const publicKey = await crypto.subtle.importKey(
+    "spki",
+    publicKeyBuffer,
+    {
+      name: "RSA-OAEP",
+      hash: { name: "SHA-256" }, // Hashing algorithm
+    },
+    true, // Extractable
+    ["encrypt"]
+  );
+
+  // Encrypt the symmetric key using the user's public key
+  const encryptedSymmetricKey = await crypto.subtle.encrypt(
+    {
+      name: "RSA-OAEP",
+    },
+    publicKey,
+    symmetricKeyBuffer
+  );
+
+  return arrayBufferToBase64(encryptedSymmetricKey);
+};
+
+// Decrypts the symmetric key using the user's private key (RSA-OAEP)
+export const decryptSymmetricKeyWithPrivateKey = async (
+  encryptedSymmetricKeyBase64: string,
+  privateKeyBase64: string
+) => {
+  const encryptedSymmetricKeyBuffer = base64ToArrayBuffer(
+    encryptedSymmetricKeyBase64
+  );
+  const privateKeyBuffer = base64ToArrayBuffer(privateKeyBase64);
+
+  // Import private key
+  const privateKey = await crypto.subtle.importKey(
+    "pkcs8",
+    privateKeyBuffer,
+    {
+      name: "RSA-OAEP",
+      hash: { name: "SHA-256" },
+    },
+    true,
+    ["decrypt"]
+  );
+
+  // Decrypt the symmetric key using the user's private key
+  const decryptedSymmetricKey = await crypto.subtle.decrypt(
+    {
+      name: "RSA-OAEP",
+    },
+    privateKey,
+    encryptedSymmetricKeyBuffer
+  );
+
+  return arrayBufferToBase64(decryptedSymmetricKey);
+};
+
+// Encrypts data (e.g., password) with the symmetric AES-GCM key
+export const encryptPassword = async (
+  password: string,
+  symmetricKeyBase64: string
+) => {
+  const symmetricKeyBuffer = base64ToArrayBuffer(symmetricKeyBase64);
+  const symmetricKey = await crypto.subtle.importKey(
+    "raw",
+    symmetricKeyBuffer,
+    "AES-GCM",
+    false,
+    ["encrypt"]
+  );
+
+  const iv = crypto.getRandomValues(new Uint8Array(12)); // Generate random IV
+  const encodedPassword = new TextEncoder().encode(password);
+
+  // Encrypt password
+  const encryptedPasswordBuffer = await crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv,
+    },
+    symmetricKey,
+    encodedPassword
+  );
+
+  return {
+    encryptedPassword: arrayBufferToBase64(encryptedPasswordBuffer),
+    iv: uint8ArrayToBase64(iv), // Store the IV alongside the encrypted data
+  };
+};
+
+// Decrypts data (e.g., password) with the symmetric AES-GCM key
+export const decryptPassword = async (
+  encryptedPasswordBase64: string,
+  ivBase64: string,
+  symmetricKeyBase64: string
+) => {
+  const symmetricKeyBuffer = base64ToArrayBuffer(symmetricKeyBase64);
+  const symmetricKey = await crypto.subtle.importKey(
+    "raw",
+    symmetricKeyBuffer,
+    "AES-GCM",
+    false,
+    ["decrypt"]
+  );
+
+  const iv = base64ToUint8Array(ivBase64);
+  const encryptedPasswordBuffer = base64ToArrayBuffer(encryptedPasswordBase64);
+
+  // Decrypt the password
+  const decryptedPasswordBuffer = await crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv,
+    },
+    symmetricKey,
+    encryptedPasswordBuffer
+  );
+
+  return new TextDecoder().decode(decryptedPasswordBuffer); // Return the decrypted password as a string
 };

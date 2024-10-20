@@ -23,6 +23,9 @@
 	"/requestlock": [
 		"src/routes/requestlock/+page.ts"
 	],
+	"/resetpw": [
+		"src/routes/resetpw/+page.ts"
+	],
 	"/(authed)/(admin)/users": [
 		"src/routes/(authed)/(admin)/users/+page.ts",
 		"src/routes/(authed)/(admin)/+layout.ts",

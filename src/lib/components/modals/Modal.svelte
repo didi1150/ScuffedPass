@@ -1,11 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
 
-  // Props
   export let isOpen: boolean = false;
   export let closeOnClickOutside: boolean = true;
 
-  // Event dispatcher to emit close event
   const dispatch = createEventDispatcher();
 
   function closeModal() {
@@ -40,7 +38,9 @@
 </script>
 
 {#if isOpen}
-  <button class="modal-overlay" on:click={handleOutsideClick}>
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div class="modal-overlay" on:click={handleOutsideClick}>
     <div class="modal-content">
       <button class="close" on:click={handleButtonClose}>
         <svg
@@ -56,7 +56,7 @@
       </button>
       <slot />
     </div>
-  </button>
+  </div>
 {/if}
 
 <style>

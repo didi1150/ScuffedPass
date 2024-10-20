@@ -1,12 +1,23 @@
 <script lang="ts">
   import { goto, invalidateAll } from "$app/navigation";
+  import RecoveryKey from "$lib/components/modals/content/RecoveryKey.svelte";
+  import Modal from "$lib/components/modals/Modal.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
-  import { hashMasterPassword } from "$lib/key";
+  import {
+    encryptPrivateKey,
+    encryptSymmetricKeyWithPublicKey,
+    generateKeyPair,
+    generateRecoveryKey,
+    generateSymmetricKey,
+    hashMasterPassword,
+  } from "$lib/key";
   import { refreshToken, salt, token } from "$lib/session";
   let email = "",
     password = "";
 
   let error = false;
+  let recoveryKey = "";
+  let isOpen = false;
 
   $: handleSubmit = async () => {
     error = false;
@@ -16,12 +27,49 @@
         email,
         password: hashPW,
       })
-      .then((res) => {
+      .then(async (res) => {
         if (res.status === 200) {
           token.set(res.data.access_token);
           refreshToken.set(res.data.refresh_token);
           salt.set(res.data.salt);
-          goto("/");
+          if (res.data.first_login) {
+            const { publicKey, privateKey } = await generateKeyPair();
+            const localRecoveryKey = await generateRecoveryKey();
+            const encryptedSymmetricKey =
+              await encryptSymmetricKeyWithPublicKey(
+                await generateSymmetricKey(),
+                publicKey
+              );
+            const enc_res = await encryptPrivateKey(
+              privateKey,
+              password,
+              localRecoveryKey,
+              res.data.salt
+            );
+            if (!enc_res) throw Error("Couldn't encrypt private key");
+            else {
+              const {
+                masterEncryptedPrivateKey,
+                recoveryEncryptedPrivateKey,
+                iv,
+              } = enc_res;
+
+              const cryptoAttempt = await axiosInstance.post(
+                "/auth/account/user/crypto",
+                {
+                  publicKey,
+                  privateKeyMaster: masterEncryptedPrivateKey,
+                  privateKeyRecovery: recoveryEncryptedPrivateKey,
+                  iv,
+                  symmetricKey: encryptedSymmetricKey,
+                }
+              );
+              if (cryptoAttempt.status === 200) {
+                recoveryKey = localRecoveryKey;
+                isOpen = true;
+              }
+            }
+          } else goto("/");
         } else {
           invalidateAll().then(() => (error = true));
         }
@@ -32,6 +80,10 @@
       });
   };
 </script>
+
+<Modal bind:isOpen>
+  <RecoveryKey bind:recoveryKey bind:isOpen></RecoveryKey>
+</Modal>
 
 <div class="background">
   <div class="login-box">
@@ -82,7 +134,10 @@
       <p class="register-link">
         Don't have an account? <a href="register">Register</a>
       </p>
-      <a class="lock" href="/requestlock">Lock account</a>
+      <div class="advanced">
+        <a class="lock" href="/requestlock">Lock account</a>
+        <a class="forgot" href="/resetpw">Forgot Password?</a>
+      </div>
       {#if error}
         <p class="error">Please try again</p>
       {/if}
@@ -182,9 +237,13 @@
     text-align: center;
   }
 
-  .lock {
-    transform: translateY(-50%);
-    margin-left: 33%;
+  .advanced {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+  }
+
+  .advanced a {
     color: white;
     font-weight: bold;
     text-decoration: none;

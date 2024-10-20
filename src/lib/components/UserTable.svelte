@@ -2,21 +2,21 @@
   import { invalidateAll } from "$app/navigation";
   export let users;
   import Modal from "$lib/components/modals/Modal.svelte";
-  import ConfirmDelete from "$lib/components/modals/content/ConfirmDelete.svelte";
+  import ConfirmAction from "$lib/components/modals/content/ConfirmAction.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
-  import ChangeMasterPassword from "./modals/content/ChangeMasterPassword.svelte";
   let isOpen = false;
-  let mode = "";
+  let mode: "delete" | "lock" = "delete";
   let selectedUserId: number;
   let selectedUserEmail: string = "";
 </script>
 
 <Modal bind:isOpen>
   {#if mode === "delete"}
-    <ConfirmDelete
+    <ConfirmAction
       bind:isOpen
       question="Do you want to delete this user?"
-      deleteFunction={() => {
+      errorMessage="Couldn't delete this user"
+      callback={() => {
         axiosInstance
           .delete(`/admin/delete?id=${selectedUserId}`)
           .then((result) => {
@@ -24,13 +24,7 @@
           })
           .finally(invalidateAll);
       }}
-    ></ConfirmDelete>
-  {:else if mode === "edit"}
-    <ChangeMasterPassword
-      username={selectedUserEmail}
-      bind:isOpen
-      isAdmin={true}
-    ></ChangeMasterPassword>
+    ></ConfirmAction>
   {/if}
 </Modal>
 <div class="background">
@@ -44,7 +38,6 @@
           <th>Locked</th>
           <th>Created At</th>
           <th>Delete</th>
-          <th>Edit Master Password</th>
         </tr><tr />
       </thead>
 
@@ -74,30 +67,6 @@
                 >
               </button></td
             >
-            {#if !row.locked}
-              <td
-                ><button
-                  on:click={() => {
-                    mode = "edit";
-                    selectedUserEmail = row.email;
-                    selectedUserId = row.id;
-                    isOpen = true;
-                  }}
-                  ><svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="1em"
-                    height="1em"
-                    viewBox="0 0 24 24"
-                    ><path
-                      fill="white"
-                      d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83l3.75 3.75z"
-                    /></svg
-                  >
-                </button></td
-              >
-            {:else}
-              <td>N/A</td>
-            {/if}
           </tr>
         {/each}
       </tbody>
