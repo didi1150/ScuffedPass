@@ -13,8 +13,6 @@ export const refreshToken = writable(
 
 export const salt = writable("");
 
-export const recoveryToken = writable("");
-
 if (isBrowser) {
   token.subscribe((value) => localStorage.setItem("token", value));
   refreshToken.subscribe((value) =>
