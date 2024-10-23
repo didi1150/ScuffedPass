@@ -8,12 +8,13 @@
     encryptPassword,
     hashMasterPassword,
   } from "$lib/key";
+  import { getSalt } from "$lib/session";
   export let isOpen = false;
   let error = false;
 
   const handleSubmit = async () => {
-    const email = (await axiosInstance.get("/auth/account/user")).data;
-    const { hashPW, salt } = await hashMasterPassword(email, masterPassword);
+    const salt = await getSalt(email);
+    const { hashPW } = await hashMasterPassword(email, masterPassword, salt);
     axiosInstance
       .post("/auth/account/user/encryptionKey", { hash: hashPW })
       .then((response) => {

@@ -5,13 +5,16 @@
   import { axiosInstance } from "$lib/interceptors/axios";
   import {
     encryptPrivateKey,
+    encryptPrivateKeyWithRecoverKey,
     encryptSymmetricKeyWithPublicKey,
+    generateIV,
     generateKeyPair,
     generateRecoveryKey,
     generateSymmetricKey,
     hashMasterPassword,
+    uint8ArrayToBase64,
   } from "$lib/key";
-  import { refreshToken, salt, token } from "$lib/session";
+  import { getSalt, refreshToken, salt, token } from "$lib/session";
   let email = "",
     password = "";
 
@@ -21,6 +24,7 @@
 
   $: handleSubmit = async () => {
     error = false;
+    const salt = await getSalt(email);
     const { hashPW } = await hashMasterPassword(email, password);
     axiosInstance
       .post("auth/account/authenticate", {
@@ -29,38 +33,41 @@
       })
       .then(async (res) => {
         if (res.status === 200) {
+          // console.log("Login successful");
           token.set(res.data.access_token);
           refreshToken.set(res.data.refresh_token);
-          salt.set(res.data.salt);
           if (res.data.first_login) {
             const { publicKey, privateKey } = await generateKeyPair();
-            const localRecoveryKey = await generateRecoveryKey();
+            const localRecoveryKey = generateRecoveryKey();
             const encryptedSymmetricKey =
               await encryptSymmetricKeyWithPublicKey(
                 await generateSymmetricKey(),
                 publicKey
               );
-            const enc_res = await encryptPrivateKey(
+            const iv = generateIV();
+            const masterKey = await encryptPrivateKey(
               privateKey,
               password,
-              localRecoveryKey,
-              res.data.salt
+              salt,
+              iv
             );
-            if (!enc_res) throw Error("Couldn't encrypt private key");
-            else {
-              const {
-                masterEncryptedPrivateKey,
-                recoveryEncryptedPrivateKey,
-                iv,
-              } = enc_res;
 
+            const recoveryEncKey = await encryptPrivateKeyWithRecoverKey(
+              privateKey,
+              localRecoveryKey,
+              salt,
+              iv
+            );
+            if (!masterKey || !recoveryEncKey)
+              throw Error("Couldn't encrypt private key");
+            else {
               const cryptoAttempt = await axiosInstance.post(
                 "/auth/account/user/crypto",
                 {
                   publicKey,
-                  privateKeyMaster: masterEncryptedPrivateKey,
-                  privateKeyRecovery: recoveryEncryptedPrivateKey,
-                  iv,
+                  privateKeyMaster: masterKey,
+                  privateKeyRecovery: recoveryEncKey,
+                  iv: uint8ArrayToBase64(iv),
                   symmetricKey: encryptedSymmetricKey,
                 }
               );

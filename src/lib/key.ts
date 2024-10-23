@@ -6,9 +6,10 @@ const isBrowser =
 
 export const hashMasterPassword = async (
   email: string,
-  masterPassword: string
+  masterPassword: string,
+  salt: string | undefined = undefined
 ) => {
-  const salt = await genSalt(email, masterPassword);
+  if (!salt) salt = await genSalt(email, masterPassword);
   const hashPW = await hash(masterPassword, salt);
   return {
     hashPW,
@@ -71,16 +72,16 @@ const base64ToArrayBuffer = (base64: string) => {
   return bytes.buffer;
 };
 
-function uint8ArrayToBase64(uint8Array: Uint8Array) {
+export const uint8ArrayToBase64 = (uint8Array: Uint8Array) => {
   let binaryString = "";
   const len = uint8Array.length;
   for (let i = 0; i < len; i++) {
     binaryString += String.fromCharCode(uint8Array[i]);
   }
   return btoa(binaryString);
-}
+};
 
-function base64ToUint8Array(base64: string) {
+export const base64ToUint8Array = (base64: string) => {
   const binaryString = atob(base64);
   const len = binaryString.length;
   const uint8Array = new Uint8Array(len);
@@ -88,7 +89,7 @@ function base64ToUint8Array(base64: string) {
     uint8Array[i] = binaryString.charCodeAt(i);
   }
   return uint8Array;
-}
+};
 
 const bcryptToArrayBuffer = async (bcryptHash: string) => {
   // Remove the bcrypt version and salt (first 29 characters)
@@ -136,6 +137,10 @@ export const generateRecoveryKey = () => {
   return uint8ArrayToBase64(recoveryKey);
 };
 
+export const generateIV = () => {
+  return crypto.getRandomValues(new Uint8Array(12));
+};
+
 export const deriveKeyFromRecoveryKey = async (
   recoveryKeyBase64: string,
   salt: string,
@@ -176,24 +181,19 @@ export const deriveKeyFromRecoveryKey = async (
 export const encryptPrivateKey = async (
   privateKey: string,
   masterPassword: string,
-  recoveryKey: string,
-  salt: string
+  salt: string,
+  iv: Uint8Array
 ) => {
   // Derive a key from the master password
   const masterKey = await deriveMasterKeyFromPassword(masterPassword, salt);
 
   if (!masterKey) return "";
 
-  // Derive a key from the recovery key
-  const recoveryDerivedKey = await deriveKeyFromRecoveryKey(recoveryKey, salt);
-  if (!recoveryDerivedKey) return "";
-
   // Encrypt the private key using AES-GCM
-  const iv = crypto.getRandomValues(new Uint8Array(12)); // Initialization vector
   const privateKeyBuffer = base64ToArrayBuffer(privateKey);
 
   // Encrypt the private key with master key
-  const masterEncryptedPrivateKey = await crypto.subtle.encrypt(
+  const encryptedKey = await crypto.subtle.encrypt(
     {
       name: "AES-GCM",
       iv,
@@ -202,24 +202,36 @@ export const encryptPrivateKey = async (
     privateKeyBuffer
   );
 
-  // Encrypt the result again with recovery key
-  const recoveryEncryptedPrivateKey = await crypto.subtle.encrypt(
+  return arrayBufferToBase64(encryptedKey);
+};
+
+export const encryptPrivateKeyWithRecoverKey = async (
+  privateKey: string,
+  recoveryKey: string,
+  salt: string,
+  iv: Uint8Array
+) => {
+  // Derive a key from the master password
+  const key = await deriveKeyFromRecoveryKey(recoveryKey, salt);
+
+  if (!key) return "";
+
+  // Encrypt the private key using AES-GCM
+  const privateKeyBuffer = base64ToArrayBuffer(privateKey);
+
+  // Encrypt the private key with master key
+  const encryptedKey = await crypto.subtle.encrypt(
     {
       name: "AES-GCM",
       iv,
     },
-    recoveryDerivedKey,
+    key,
     privateKeyBuffer
   );
 
-  return {
-    iv: uint8ArrayToBase64(iv),
-    masterEncryptedPrivateKey: arrayBufferToBase64(masterEncryptedPrivateKey),
-    recoveryEncryptedPrivateKey: arrayBufferToBase64(
-      recoveryEncryptedPrivateKey
-    ),
-  };
+  return arrayBufferToBase64(encryptedKey);
 };
+
 export const decryptPrivateKey = async (
   encryptedData: string,
   masterPassword: string,

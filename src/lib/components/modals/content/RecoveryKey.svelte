@@ -45,9 +45,9 @@
     <button
       class="redirect"
       on:click={() => {
-        goto("/login");
+        goto("/");
         isOpen = false;
-      }}>Go to login</button
+      }}>Continue</button
     >
   </div>
 </div>

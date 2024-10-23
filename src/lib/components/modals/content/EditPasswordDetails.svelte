@@ -8,7 +8,7 @@
     hashMasterPassword,
   } from "$lib/key";
   import InputBox from "$lib/components/InputBox.svelte";
-  import { salt } from "$lib/session";
+  import { getSalt, salt } from "$lib/session";
 
   export let passwordID: number;
   export let isOpen: boolean;
@@ -41,7 +41,9 @@
     }
 
     const username = (await axiosInstance.get("/auth/account/user")).data;
-    const { hashPW, salt } = await hashMasterPassword(username, masterPassword);
+
+    const salt = await getSalt(email);
+    const { hashPW } = await hashMasterPassword(username, masterPassword, salt);
     axiosInstance
       .post("/auth/account/user/encryptionKey", { hash: hashPW })
       .then((response) => {

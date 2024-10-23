@@ -6,10 +6,14 @@
   import { page } from "$app/stores";
   import { setRefreshToken, setSalt, setToken } from "$lib/session";
   import { hasRole } from "$lib/roles";
+  import Modal from "$lib/components/modals/Modal.svelte";
+  import ChangeMasterPassword from "$lib/components/modals/content/ChangeMasterPassword.svelte";
 
   $: currentUrl = $page.url.pathname;
 
   let message = "You are not logged in";
+
+  let isOpen = false;
 
   $: isAdmin = hasRole("admin");
 
@@ -30,6 +34,9 @@
   };
 </script>
 
+<Modal bind:isOpen>
+  <ChangeMasterPassword bind:isOpen></ChangeMasterPassword>
+</Modal>
 <div class="container">
   <h2>{message}</h2>
   <div class="controls">
@@ -39,6 +46,7 @@
       <button class="users" on:click={() => goto("/users")}>Users</button>
     {/if}
   </div>
+  <button on:click={() => (isOpen = true)}>Change Master Password</button>
 </div>
 
 <style>
@@ -59,6 +67,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-wrap: wrap;
   }
 
   button {

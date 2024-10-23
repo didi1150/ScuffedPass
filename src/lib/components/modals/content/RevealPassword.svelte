@@ -6,6 +6,7 @@
     decryptSymmetricKeyWithPrivateKey,
     hashMasterPassword,
   } from "$lib/key";
+  import { getSalt } from "$lib/session";
 
   export let data;
   export let passwordIV;
@@ -20,7 +21,8 @@
     error = false;
 
     const email = (await axiosInstance.get("/auth/account/user")).data;
-    const { hashPW, salt } = await hashMasterPassword(email, password);
+    const salt = await getSalt(email);
+    const { hashPW } = await hashMasterPassword(email, password, salt);
     axiosInstance
       .post("/auth/account/user/encryptionKey", { hash: hashPW })
       .then((response) => {

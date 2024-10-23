@@ -4,11 +4,13 @@
   import Modal from "$lib/components/modals/Modal.svelte";
   import { axiosInstance } from "$lib/interceptors/axios.js";
   import {
+    base64ToUint8Array,
     decryptPrivateKeyWithRecoveryKey,
     encryptPrivateKey,
     generateRecoveryKey,
     hashMasterPassword,
   } from "$lib/key";
+  import { setSalt } from "$lib/session";
   import { onMount } from "svelte";
 
   let email = "";
@@ -27,6 +29,7 @@
     const params = new URLSearchParams(window.location.search);
     email = params.get("email") || "";
     token = params.get("token") || "";
+    setSalt("");
 
     if (email && token) {
       isResetFlow = true;
@@ -55,7 +58,6 @@
       const result = await axiosInstance.post("/auth/account/requestrecovery", {
         email,
         token,
-        password,
       });
 
       if (result.status === 200) {
@@ -66,24 +68,31 @@
           salt,
           iv
         );
-        const newRecoveryKey = generateRecoveryKey();
+        newRecoveryKey = generateRecoveryKey();
         const hash = await hashMasterPassword(email, password);
-        const encryptionBundle = await encryptPrivateKey(
+        const masterKey = await encryptPrivateKey(
           privateKey,
           password,
-          newRecoveryKey,
-          hash.salt
+          hash.salt,
+          base64ToUint8Array(iv)
         );
-        if (!encryptionBundle) {
+
+        const rKey = await encryptPrivateKey(
+          privateKey,
+          newRecoveryKey,
+          hash.salt,
+          base64ToUint8Array(iv)
+        );
+        if (!masterKey || !rKey) {
           status = "fail";
           return;
         }
         const updateAttempt = await axiosInstance.patch(
           "/auth/account/updatepw",
           {
-            iv: encryptionBundle.iv,
-            privateKeyMaster: encryptionBundle.masterEncryptedPrivateKey,
-            privateKeyRecovery: encryptionBundle.recoveryEncryptedPrivateKey,
+            iv,
+            privateKeyMaster: masterKey,
+            privateKeyRecovery: rKey,
             password: hash.hashPW,
             salt: hash.salt,
             token,
@@ -98,13 +107,14 @@
         status = "fail";
       }
     } catch (error) {
+      console.error(error);
       status = "fail";
     }
   };
 </script>
 
 <Modal bind:isOpen>
-  <RecoveryKey recoveryKey={newRecoveryKey} bind:isOpen></RecoveryKey>
+  <RecoveryKey bind:recoveryKey={newRecoveryKey} bind:isOpen></RecoveryKey>
 </Modal>
 
 <div class="background">
@@ -112,6 +122,9 @@
     {#if !isResetFlow}
       <!-- Request Reset Email View -->
       <form on:submit|preventDefault={handleRequestReset}>
+        <h2 style="text-align: center; color: white;">
+          All your devices will be logged out upon your submit
+        </h2>
         <InputBox
           type="text"
           id="email"
@@ -130,6 +143,9 @@
     {:else}
       <!-- Password Reset Form (Triggered by URL with token and email) -->
       <form on:submit|preventDefault={handlePasswordReset}>
+        <h2 style="text-align: center; color: white;">
+          All your devices will be logged out upon your submit
+        </h2>
         <InputBox
           id="recoveryKey"
           label="Enter your recovery key"
@@ -188,40 +204,6 @@
     text-align: center;
   }
 
-  .input-box {
-    position: relative;
-    width: 330px;
-    margin: 20px 0;
-    border-bottom: 2px solid white;
-  }
-
-  .input-box label {
-    position: absolute;
-    top: 50%;
-    left: 5px;
-    transform: translateY(-50%);
-    font-size: 1em;
-    color: white;
-    pointer-events: none;
-    transition: 0.5s;
-  }
-
-  .input-box input:focus ~ label,
-  .input-box input:valid ~ label {
-    top: -5px;
-  }
-
-  .input-box input {
-    width: 100%;
-    height: 40px;
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: 1em;
-    color: white;
-    padding: 0 0 0 5px;
-  }
-
   button {
     width: 100%;
     height: 40px;
@@ -240,7 +222,7 @@
       border: none;
       border-radius: 0;
     }
-    .input-box {
+    .reset-box {
       width: 280px;
     }
   }

@@ -1,4 +1,5 @@
 import { get, writable } from "svelte/store";
+import { axiosInstance } from "./interceptors/axios";
 
 const isBrowser =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -37,8 +38,14 @@ export const setRefreshToken = (t: string) => {
   return refreshToken.set(t);
 };
 
-export const getSalt = () => {
-  return get(salt);
+export const getSalt = async (email: string) => {
+  if (get(salt).length === 0) {
+    const salt_res = await axiosInstance.get(
+      `/auth/account/get-salt?email=${email}`
+    );
+    salt.set(salt_res.data);
+    return salt_res.data;
+  } else return get(salt);
 };
 
 export const setSalt = (newSalt: string) => {

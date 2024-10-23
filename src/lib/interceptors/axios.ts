@@ -1,4 +1,4 @@
-import { invalidateAll } from "$app/navigation";
+import { goto, invalidateAll } from "$app/navigation";
 import {
   getRefreshToken,
   readToken,
@@ -40,6 +40,7 @@ const refreshTokenIfNeeded = async (): Promise<string | null> => {
     setSalt("");
     setRefreshToken("");
     invalidateAll();
+    goto("/login");
   }
   return null;
 };
