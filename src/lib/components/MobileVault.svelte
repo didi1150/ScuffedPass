@@ -1,26 +1,62 @@
 <script lang="ts">
   import Modal from "$lib/components/modals/Modal.svelte";
-  import ConfirmWithPassword from "$lib/components/modals/content/RevealPassword.svelte";
   import ConfirmAction from "$lib/components/modals/content/ConfirmAction.svelte";
   import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
   import EditPasswordDetails from "$lib/components/modals/content/EditPasswordDetails.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
   import { invalidateAll } from "$app/navigation";
+  import { onMount } from "svelte";
+  import { decryptData } from "$lib/key";
+  import { getSymmetricKey } from "$lib/session";
   export let tableData: Password[] = [];
-
+  let decryptedPasswords: { password: string; id: number }[] = [];
   let isOpen = false;
-  let mode = "reveal";
+  let mode = "edit";
 
   let selectedPasswordID: number;
 
-  let data = "",
-    iv = "";
+  onMount(async () => {
+    tableData.forEach(async (value) => {
+      let decryptedPW = await decryptData(
+        value.password,
+        value.iv,
+        getSymmetricKey()
+      );
+      decryptedPasswords.push({ password: decryptedPW, id: value.passwordID });
+    });
+  });
+
+  const getDecryptedPassword = (id: number) => {
+    return decryptedPasswords.find((value) => {
+      return value.id === id;
+    });
+  };
+
+  let copyToolTip = "";
+  let showCopyToolTip = -1;
+  let tooltipTimer: number;
+  const handleCopy = async (passwordID: number) => {
+    clearTimeout(tooltipTimer);
+    let pw = getDecryptedPassword(passwordID);
+    if (!pw) {
+      copyToolTip = "Error: Couldn't decrypt password";
+    } else {
+      try {
+        await navigator.clipboard.writeText(pw.password);
+        copyToolTip = "Password copied";
+      } catch (error) {
+        copyToolTip = "Failed to copy!";
+      }
+    }
+    showCopyToolTip = passwordID;
+    tooltipTimer = setTimeout(() => {
+      showCopyToolTip = -1;
+    }, 2000);
+  };
 </script>
 
 <Modal bind:isOpen>
-  {#if mode === "reveal"}
-    <ConfirmWithPassword bind:data passwordIV={iv}></ConfirmWithPassword>
-  {:else if mode === "delete"}
+  {#if mode === "delete"}
     <ConfirmAction
       errorMessage="Couldn't delete this password"
       callback={() => {
@@ -62,26 +98,28 @@
           </div>
         </div>
         <div class="controls">
-          <button
-            class="svg-container"
-            on:click={() => {
-              data = row.password;
-              iv = row.iv;
-              mode = "reveal";
-              isOpen = true;
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="1em"
-              height="1em"
-              viewBox="0 0 24 24"
-              ><path
-                fill="white"
-                d="M12 6.5a9.77 9.77 0 0 1 8.82 5.5c-1.65 3.37-5.02 5.5-8.82 5.5S4.83 15.37 3.18 12A9.77 9.77 0 0 1 12 6.5m0-2C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5m0 5a2.5 2.5 0 0 1 0 5a2.5 2.5 0 0 1 0-5m0-2c-2.48 0-4.5 2.02-4.5 4.5s2.02 4.5 4.5 4.5s4.5-2.02 4.5-4.5s-2.02-4.5-4.5-4.5"
-              /></svg
-            ></button
-          >
+          <div class="copy-container">
+            <button
+              class="svg-container"
+              on:click={() => {
+                handleCopy(row.passwordID);
+              }}
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="1em"
+                height="1em"
+                viewBox="0 0 24 24"
+                ><path
+                  fill="white"
+                  d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2m0 16H8V7h11z"
+                /></svg
+              ></button
+            >
+            <!-- Tooltip -->
+            {#if showCopyToolTip === row.passwordID}
+              <span class="tooltip">{copyToolTip}</span>
+            {/if}
+          </div>
           <button
             class="svg-container"
             on:click={() => {
@@ -141,7 +179,7 @@
     border-radius: 20px;
     position: relative;
     display: block;
-    overflow-y: scroll;
+    overflow-y: auto;
 
     scrollbar-width: thin;
     scrollbar-color: white rgba(0, 0, 0, 0);
@@ -230,6 +268,27 @@
     border-radius: 20px;
     outline: none;
     border: none;
+  }
+
+  .copy-container {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Tooltip styling */
+  .tooltip {
+    position: absolute;
+    top: 80%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    white-space: nowrap;
+    opacity: 0.9;
+    z-index: 100;
   }
 
   @media (max-width: 360px) {

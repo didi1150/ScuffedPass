@@ -4,7 +4,6 @@ import { axiosInstance } from "./axios";
 export const checkToken = async (url: string) => {
   try {
     const response = await axiosInstance.get("/auth/account/user");
-
     if (url === "/login" || url === "/register") {
       await goto("/");
     }
@@ -12,7 +11,7 @@ export const checkToken = async (url: string) => {
       await goto("/login");
     }
 
-    return response.data;
+    return "succeed";
   } catch (error) {
     console.error("Failed to verify user token:", error);
     await goto("/login");

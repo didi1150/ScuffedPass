@@ -1,7 +1,7 @@
 <script lang="ts">
   import { axiosInstance } from "$lib/interceptors/axios";
   import {
-    decryptPassword,
+    decryptData,
     decryptPrivateKey,
     decryptSymmetricKeyWithPrivateKey,
     hashMasterPassword,
@@ -34,7 +34,7 @@
                 encryptionKey,
                 decryptedPrivateKey
               ).then((symmetricKey) => {
-                decryptPassword(data, passwordIV, symmetricKey).then(
+                decryptData(data, passwordIV, symmetricKey).then(
                   (value) => {
                     if (!value) error = true;
                     else {

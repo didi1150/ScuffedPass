@@ -4,6 +4,7 @@
 		"src/routes/(authed)/+layout.ts"
 	],
 	"/(authed)": [
+		"src/routes/(authed)/+page.ts",
 		"src/routes/(authed)/+layout.ts",
 		"src/routes/(authed)/+layout.ts"
 	],
@@ -26,13 +27,12 @@
 	"/resetpw": [
 		"src/routes/resetpw/+page.ts"
 	],
+	"/(authed)/unlockvault": [
+		"src/routes/(authed)/unlockvault/+page.ts"
+	],
 	"/(authed)/(admin)/users": [
 		"src/routes/(authed)/(admin)/users/+page.ts",
 		"src/routes/(authed)/(admin)/+layout.ts",
-		"src/routes/(authed)/+layout.ts"
-	],
-	"/(authed)/vault": [
-		"src/routes/(authed)/vault/+page.ts",
 		"src/routes/(authed)/+layout.ts"
 	]
 }

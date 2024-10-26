@@ -4,6 +4,8 @@
   import Modal from "$lib/components/modals/Modal.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
   import {
+    decryptPrivateKey,
+    decryptSymmetricKeyWithPrivateKey,
     encryptPrivateKey,
     encryptPrivateKeyWithRecoverKey,
     encryptSymmetricKeyWithPublicKey,
@@ -14,7 +16,7 @@
     hashMasterPassword,
     uint8ArrayToBase64,
   } from "$lib/key";
-  import { getSalt, refreshToken, salt, token } from "$lib/session";
+  import { getSalt, refreshToken, setSymmetricKey, token } from "$lib/session";
   let email = "",
     password = "";
 
@@ -25,59 +27,80 @@
   $: handleSubmit = async () => {
     error = false;
     const salt = await getSalt(email);
-    const { hashPW } = await hashMasterPassword(email, password);
+    const { hashPW } = await hashMasterPassword(email, password, salt);
     axiosInstance
       .post("auth/account/authenticate", {
         email,
         password: hashPW,
       })
       .then(async (res) => {
-        if (res.status === 200) {
-          // console.log("Login successful");
-          token.set(res.data.access_token);
-          refreshToken.set(res.data.refresh_token);
-          if (res.data.first_login) {
-            const { publicKey, privateKey } = await generateKeyPair();
-            const localRecoveryKey = generateRecoveryKey();
-            const encryptedSymmetricKey =
-              await encryptSymmetricKeyWithPublicKey(
-                await generateSymmetricKey(),
-                publicKey
+        try {
+          if (res.status === 200) {
+            token.set(res.data.access_token);
+            refreshToken.set(res.data.refresh_token);
+            if (res.data.first_login) {
+              const { publicKey, privateKey } = await generateKeyPair();
+              const localRecoveryKey = generateRecoveryKey();
+              const symmKey = await generateSymmetricKey();
+              setSymmetricKey(symmKey);
+              const encryptedSymmetricKey =
+                await encryptSymmetricKeyWithPublicKey(symmKey, publicKey);
+              const iv = generateIV();
+              const masterKey = await encryptPrivateKey(
+                privateKey,
+                password,
+                salt,
+                iv
               );
-            const iv = generateIV();
-            const masterKey = await encryptPrivateKey(
-              privateKey,
-              password,
-              salt,
-              iv
-            );
 
-            const recoveryEncKey = await encryptPrivateKeyWithRecoverKey(
-              privateKey,
-              localRecoveryKey,
-              salt,
-              iv
-            );
-            if (!masterKey || !recoveryEncKey)
-              throw Error("Couldn't encrypt private key");
-            else {
-              const cryptoAttempt = await axiosInstance.post(
-                "/auth/account/user/crypto",
-                {
-                  publicKey,
-                  privateKeyMaster: masterKey,
-                  privateKeyRecovery: recoveryEncKey,
-                  iv: uint8ArrayToBase64(iv),
-                  symmetricKey: encryptedSymmetricKey,
-                }
+              const recoveryEncKey = await encryptPrivateKeyWithRecoverKey(
+                privateKey,
+                localRecoveryKey,
+                salt,
+                iv
               );
-              if (cryptoAttempt.status === 200) {
-                recoveryKey = localRecoveryKey;
-                isOpen = true;
+              if (!masterKey || !recoveryEncKey)
+                throw Error("Couldn't encrypt private key");
+              else {
+                const cryptoAttempt = await axiosInstance.post(
+                  "/auth/account/user/crypto",
+                  {
+                    publicKey,
+                    privateKeyMaster: masterKey,
+                    privateKeyRecovery: recoveryEncKey,
+                    iv: uint8ArrayToBase64(iv),
+                    symmetricKey: encryptedSymmetricKey,
+                  }
+                );
+                if (cryptoAttempt.status === 200) {
+                  recoveryKey = localRecoveryKey;
+                  isOpen = true;
+                }
               }
+            } else {
+              const cryptoResponse = await axiosInstance.post(
+                "/auth/account/user/encryptionKey",
+                { hash: hashPW }
+              );
+              const { encryptionKey, privateKeyMaster, iv, salt } =
+                cryptoResponse.data;
+              const decryptedPrivateKey = await decryptPrivateKey(
+                privateKeyMaster,
+                password,
+                salt,
+                iv
+              );
+              const symmKey = await decryptSymmetricKeyWithPrivateKey(
+                encryptionKey,
+                decryptedPrivateKey
+              );
+              setSymmetricKey(symmKey);
             }
-          } else goto("/");
-        } else {
+            await goto("/");
+          } else {
+            invalidateAll().then(() => (error = true));
+          }
+        } catch (error) {
           invalidateAll().then(() => (error = true));
         }
       })
@@ -275,6 +298,14 @@
     }
     .input-box {
       width: 280px;
+    }
+    .advanced {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .advanced a {
+      margin-bottom: 6px;
     }
   }
 </style>

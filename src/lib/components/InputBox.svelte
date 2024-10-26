@@ -4,11 +4,12 @@
   export let label: string = "";
   export let value: string = "";
   export let required: boolean = false;
+  export let width = "100%";
 
   $: hasContent = value.length > 0;
 </script>
 
-<div class="input-box" class:has-content={hasContent}>
+<div class="input-box" class:has-content={hasContent} style="width: {width};">
   <input {id} {...{ type }} {required} bind:value on:focus on:blur />
   <label for={id}>{label}</label>
 </div>
@@ -16,7 +17,6 @@
 <style>
   .input-box {
     position: relative;
-    width: 100%;
     margin: 30px 0px;
     border-bottom: 2px solid white;
   }

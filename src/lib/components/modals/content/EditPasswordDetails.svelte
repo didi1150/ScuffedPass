@@ -2,9 +2,10 @@
   import { invalidateAll } from "$app/navigation";
   import { axiosInstance } from "$lib/interceptors/axios";
   import {
+    base64ToUint8Array,
     decryptPrivateKey,
     decryptSymmetricKeyWithPrivateKey,
-    encryptPassword,
+    encryptData,
     hashMasterPassword,
   } from "$lib/key";
   import InputBox from "$lib/components/InputBox.svelte";
@@ -42,7 +43,7 @@
 
     const username = (await axiosInstance.get("/auth/account/user")).data;
 
-    const salt = await getSalt(email);
+    const salt = await getSalt(username);
     const { hashPW } = await hashMasterPassword(username, masterPassword, salt);
     axiosInstance
       .post("/auth/account/user/encryptionKey", { hash: hashPW })
@@ -54,17 +55,22 @@
               decryptSymmetricKeyWithPrivateKey(
                 encryptionKey,
                 decryptedPrivateKey
-              ).then((symmetricKey) => {
-                encryptPassword(password, symmetricKey).then((value) => {
+              ).then(async (symmetricKey) => {
+                const enc_website = await encryptData(website, symmetricKey);
+                encryptData(
+                  password,
+                  symmetricKey,
+                  base64ToUint8Array(enc_website.iv)
+                ).then((value) => {
                   if (!value) error = "The master password is incorrect";
                   else {
                     axiosInstance
                       .patch("/vault", {
                         id: passwordID,
-                        website,
+                        website: enc_website.encryptedData,
                         email,
-                        password: value.encryptedPassword,
-                        iv: value.iv,
+                        password: value.encryptedData,
+                        iv: enc_website.iv,
                       })
                       .then((res) => {
                         if (res.status === 200) {

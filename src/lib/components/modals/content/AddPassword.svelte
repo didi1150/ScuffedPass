@@ -3,9 +3,10 @@
   import InputBox from "$lib/components/InputBox.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
   import {
+    base64ToUint8Array,
     decryptPrivateKey,
     decryptSymmetricKeyWithPrivateKey,
-    encryptPassword,
+    encryptData,
     hashMasterPassword,
   } from "$lib/key";
   import { getSalt } from "$lib/session";
@@ -13,8 +14,10 @@
   let error = false;
 
   const handleSubmit = async () => {
-    const salt = await getSalt(email);
-    const { hashPW } = await hashMasterPassword(email, masterPassword, salt);
+    const username = (await axiosInstance.get("/auth/account/user")).data;
+    const salt = await getSalt(username);
+    console.log(salt);
+    const { hashPW } = await hashMasterPassword(username, masterPassword, salt);
     axiosInstance
       .post("/auth/account/user/encryptionKey", { hash: hashPW })
       .then((response) => {
@@ -26,16 +29,21 @@
               decryptSymmetricKeyWithPrivateKey(
                 encryptionKey,
                 decryptedPrivateKey
-              ).then((symmetricKey) => {
-                encryptPassword(password, symmetricKey).then((value) => {
+              ).then(async (symmetricKey) => {
+                const enc_website = await encryptData(website, symmetricKey);
+                encryptData(
+                  password,
+                  symmetricKey,
+                  base64ToUint8Array(enc_website.iv)
+                ).then((value) => {
                   if (!value) error = true;
                   else {
                     axiosInstance
                       .post("/vault", {
-                        website,
+                        website: enc_website.encryptedData,
                         email,
-                        password: value.encryptedPassword,
-                        iv: value.iv,
+                        password: value.encryptedData,
+                        iv: enc_website.iv,
                       })
                       .then((res) => {
                         if (res.status === 200) {

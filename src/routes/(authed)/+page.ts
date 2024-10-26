@@ -1,15 +1,14 @@
 import { goto } from "$app/navigation";
 import { axiosInstance } from "$lib/interceptors/axios.js";
-import { setSalt } from "$lib/session";
 export const ssr = false;
-export const load = async () => {
+export const load = async ({ url }) => {
+  //   if (url.pathname !== "/") return;
   // console.log("Loading Passwords...");
   try {
     const response = await axiosInstance.get<Password>("/vault");
     // console.log(response.data);
-    const saltResponse = await axiosInstance.get("/auth/account/user/salt");
-    if (response.data && Array.isArray(response.data) && saltResponse.data) {
-      const responseArray = response.data.map((item: Password) => {
+    if (response.data && Array.isArray(response.data)) {
+      const responseArray: Password[] = response.data.map((item: Password) => {
         return {
           websiteURL: item.websiteURL,
           email: item.email,
@@ -19,7 +18,6 @@ export const load = async () => {
         };
       });
 
-      setSalt(saltResponse.data);
       return {
         passwords: responseArray,
       };

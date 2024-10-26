@@ -1,94 +1,95 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
-  import { goto } from "$app/navigation";
+  import { goto, invalidate, invalidateAll } from "$app/navigation";
   import { checkToken } from "$lib/interceptors/authenticationCheck";
   import { page } from "$app/stores";
-  import { setRefreshToken, setSalt, setToken } from "$lib/session";
+  import {
+    getSymmetricKey,
+    setRefreshToken,
+    setSalt,
+    setToken,
+  } from "$lib/session";
   import { hasRole } from "$lib/roles";
   import Modal from "$lib/components/modals/Modal.svelte";
   import ChangeMasterPassword from "$lib/components/modals/content/ChangeMasterPassword.svelte";
-
-  $: currentUrl = $page.url.pathname;
-
-  let message = "You are not logged in";
+  import DesktopVault from "$lib/components/DesktopVault.svelte";
+  import MobileVault from "$lib/components/MobileVault.svelte";
+  import MediaQuery from "$lib/components/MediaQuery.svelte";
+  import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
+  import { decryptData } from "$lib/key";
 
   let isOpen = false;
+  let mode = "changemaster";
 
-  $: isAdmin = hasRole("admin");
+  export let data: { passwords: Password[] } = [];
+
+  let openModal = false;
+
+  let websitesDecrypted = false;
 
   onMount(async () => {
-    message = "Welcome, " + (await checkToken(currentUrl));
+    const encryptionKey = getSymmetricKey();
+    if (!encryptionKey) {
+      await goto("/unlockvault");
+    } else if (!websitesDecrypted) {
+      data.passwords.map(async (item) => {
+        item.websiteURL = await decryptData(
+          item.websiteURL,
+          item.iv,
+          getSymmetricKey()
+        );
+      });
+      // For reactivity
+      setTimeout(() => {
+        data.passwords = data.passwords;
+        websitesDecrypted = true;
+      }, 5);
+    }
   });
 
-  $: logout = async () => {
-    await axiosInstance.post("/auth/account/logout");
-
-    setSalt("");
-    setToken("");
-    setRefreshToken("");
-
-    axiosInstance.defaults.headers.common["Authorization"] = "";
-
-    await goto("/login");
-  };
+  let mobileQuery = "(max-width: 1100px)";
+  let desktopQuery = "(min-width: 1101px)";
 </script>
 
-<Modal bind:isOpen>
-  <ChangeMasterPassword bind:isOpen></ChangeMasterPassword>
-</Modal>
-<div class="container">
-  <h2>{message}</h2>
-  <div class="controls">
-    <button class="vault" on:click={() => goto("/vault")}>Vault</button>
-    <button class="logout" on:click={logout}>Logout</button>
-    {#if isAdmin}
-      <button class="users" on:click={() => goto("/users")}>Users</button>
+<section>
+  <Modal bind:isOpen>
+    {#if mode === "changemaster"}
+      <ChangeMasterPassword bind:isOpen></ChangeMasterPassword>
     {/if}
-  </div>
-  <button on:click={() => (isOpen = true)}>Change Master Password</button>
-</div>
+  </Modal>
+  <Modal bind:isOpen={openModal}>
+    <AddPassword bind:isOpen={openModal}></AddPassword>
+  </Modal>
+  {#if websitesDecrypted}
+    <MediaQuery query={mobileQuery}>
+      <MobileVault tableData={data.passwords}></MobileVault>
+    </MediaQuery>
+    <MediaQuery query={desktopQuery}>
+      <DesktopVault tableData={data.passwords}></DesktopVault>
+    </MediaQuery>
+  {/if}
+  <button class="add" on:click={() => (openModal = true)}>Add</button>
+</section>
 
 <style>
-  .container {
-    display: flex;
+  section {
     height: 100%;
-    width: 100%;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-  h2 {
-    color: white;
-    text-align: center;
+    overflow: auto;
   }
 
-  .controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  button {
-    color: white;
-    font-size: 1.5em;
-    font-weight: 500;
-    padding: 20px 25px;
-    background-color: transparent;
-    border: 2px solid white;
-    outline: none;
-    border-radius: 50px;
-    margin: 10px;
+  .add {
+    position: absolute;
+    bottom: 50px;
+    margin-left: calc(50% - 75px);
+    width: 150px;
+    height: 50px;
     cursor: pointer;
-  }
-
-  @media (max-width: 360px) {
-    .container {
-      text-wrap: wrap;
-    }
-    h2 {
-      font-size: 1em;
-    }
+    color: black;
+    background-color: white;
+    border: none;
+    outline: none;
+    border-radius: 25px;
+    font-size: 1.25em;
   }
 </style>

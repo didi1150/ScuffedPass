@@ -369,9 +369,10 @@ export const decryptSymmetricKeyWithPrivateKey = async (
 };
 
 // Encrypts data (e.g., password) with the symmetric AES-GCM key
-export const encryptPassword = async (
+export const encryptData = async (
   password: string,
-  symmetricKeyBase64: string
+  symmetricKeyBase64: string,
+  iv?: Uint8Array
 ) => {
   const symmetricKeyBuffer = base64ToArrayBuffer(symmetricKeyBase64);
   const symmetricKey = await crypto.subtle.importKey(
@@ -382,7 +383,7 @@ export const encryptPassword = async (
     ["encrypt"]
   );
 
-  const iv = crypto.getRandomValues(new Uint8Array(12)); // Generate random IV
+  if (!iv) iv = crypto.getRandomValues(new Uint8Array(12)); // Generate random IV
   const encodedPassword = new TextEncoder().encode(password);
 
   // Encrypt password
@@ -396,14 +397,14 @@ export const encryptPassword = async (
   );
 
   return {
-    encryptedPassword: arrayBufferToBase64(encryptedPasswordBuffer),
+    encryptedData: arrayBufferToBase64(encryptedPasswordBuffer),
     iv: uint8ArrayToBase64(iv), // Store the IV alongside the encrypted data
   };
 };
 
 // Decrypts data (e.g., password) with the symmetric AES-GCM key
-export const decryptPassword = async (
-  encryptedPasswordBase64: string,
+export const decryptData = async (
+  encryptedData: string,
   ivBase64: string,
   symmetricKeyBase64: string
 ) => {
@@ -417,7 +418,7 @@ export const decryptPassword = async (
   );
 
   const iv = base64ToUint8Array(ivBase64);
-  const encryptedPasswordBuffer = base64ToArrayBuffer(encryptedPasswordBase64);
+  const encryptedPasswordBuffer = base64ToArrayBuffer(encryptedData);
 
   // Decrypt the password
   const decryptedPasswordBuffer = await crypto.subtle.decrypt(

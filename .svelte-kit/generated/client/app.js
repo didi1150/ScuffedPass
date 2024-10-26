@@ -26,8 +26,8 @@ export const dictionary = {
 		"/register/confirm": [10],
 		"/requestlock": [11],
 		"/resetpw": [12],
-		"/(authed)/(admin)/users": [5,[2,3]],
-		"/(authed)/vault": [6,[2]]
+		"/(authed)/unlockvault": [6],
+		"/(authed)/(admin)/users": [5,[2,3]]
 	};
 
 export const hooks = {

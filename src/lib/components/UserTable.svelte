@@ -7,7 +7,6 @@
   let isOpen = false;
   let mode: "delete" | "lock" = "delete";
   let selectedUserId: number;
-  let selectedUserEmail: string = "";
 </script>
 
 <Modal bind:isOpen>

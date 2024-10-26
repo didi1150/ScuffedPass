@@ -11,6 +11,8 @@ export const refreshToken = writable(
   isBrowser ? localStorage.getItem("refresh-token") || "" : ""
 );
 
+export const symmetricKey = writable("");
+
 export const salt = writable("");
 
 if (isBrowser) {
@@ -19,6 +21,16 @@ if (isBrowser) {
     localStorage.setItem("refresh-token", value)
   );
 }
+
+export const setSymmetricKey = (key: string) => {
+  symmetricKey.set(key);
+};
+
+export const getSymmetricKey = () => {
+  const key = get(symmetricKey);
+  if (key.length !== 0) return key;
+  return "";
+};
 
 export const readToken = () => {
   return get(token);
