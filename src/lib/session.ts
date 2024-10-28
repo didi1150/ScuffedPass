@@ -4,19 +4,22 @@ import { axiosInstance } from "./interceptors/axios";
 const isBrowser =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
-export let token = writable(
-  isBrowser ? localStorage.getItem("token") || "" : ""
-);
-export const refreshToken = writable(
+const token = writable(isBrowser ? localStorage.getItem("token") || "" : "");
+const refreshToken = writable(
   isBrowser ? localStorage.getItem("refresh-token") || "" : ""
 );
+
+if (isBrowser) {
+  token.subscribe((value) => localStorage.setItem("token", value));
+  refreshToken.subscribe((value) =>
+    localStorage.setItem("refresh-token", value)
+  );
+}
 
 export const symmetricKey = writable("");
 
 export const salt = writable("");
 export const readToken = () => {
-  if (!token) token = writable(
-    isBrowser ? localStorage.getItem("token") || "" : "");
   return get(token);
 };
 

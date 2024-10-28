@@ -9,7 +9,7 @@ import {
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import * as jose from "jose";
 
-export const axiosInstance = axios.create({
+const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
@@ -111,3 +111,4 @@ const createAxiosInterceptors = () => {
 };
 
 createAxiosInterceptors();
+export { axiosInstance };

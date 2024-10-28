@@ -16,7 +16,7 @@
     hashMasterPassword,
     uint8ArrayToBase64,
   } from "$lib/key";
-  import { getSalt, refreshToken, setSymmetricKey, token } from "$lib/session";
+  import { getSalt, setRefreshToken, setSymmetricKey, setToken } from "$lib/session";
   let email = "",
     password = "";
 
@@ -36,8 +36,9 @@
       .then(async (res) => {
         try {
           if (res.status === 200) {
-            token.set(res.data.access_token);
-            refreshToken.set(res.data.refresh_token);
+            console.log(res);
+            setToken(res.data.access_token);
+            setRefreshToken(res.data.refresh_token);
             if (res.data.first_login) {
               const { publicKey, privateKey } = await generateKeyPair();
               const localRecoveryKey = generateRecoveryKey();

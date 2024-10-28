@@ -88,7 +88,7 @@
         <tr class="header">
           <th>Website</th>
           <th>Email</th>
-          <th>Reveal</th>
+          <th>Copy</th>
           <th>Edit</th>
           <th>Delete</th>
         </tr><tr />
