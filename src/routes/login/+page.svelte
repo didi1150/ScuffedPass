@@ -16,7 +16,12 @@
     hashMasterPassword,
     uint8ArrayToBase64,
   } from "$lib/key";
-  import { getSalt, setRefreshToken, setSymmetricKey, setToken } from "$lib/session";
+  import {
+    getSalt,
+    setRefreshToken,
+    setSymmetricKey,
+    setToken,
+  } from "$lib/session";
   let email = "",
     password = "";
 

@@ -1,0 +1,1 @@
+import{h as o,r as e}from"../chunks/roles.CnO6KcgF.js";import{component as s}from"./0.DimRGS5L.js";const r=async()=>{if(!o("admin"))throw e(303,"/")},a=Object.freeze(Object.defineProperty({__proto__:null,load:r},Symbol.toStringTag,{value:"Module"}));export{s as component,a as universal};

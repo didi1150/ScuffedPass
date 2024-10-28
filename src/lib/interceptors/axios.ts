@@ -9,13 +9,17 @@ import {
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import * as jose from "jose";
 
+const isBrowser =
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-axiosInstance.defaults.headers.common[
-  "Authorization"
-] = `Bearer ${readToken()}`;
+if (isBrowser)
+  axiosInstance.defaults.headers.common[
+    "Authorization"
+  ] = `Bearer ${readToken()}`;
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];

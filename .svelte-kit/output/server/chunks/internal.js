@@ -39,6 +39,8 @@ const Root = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let { form } = $$props;
   let { data_0 = null } = $$props;
   let { data_1 = null } = $$props;
+  let { data_2 = null } = $$props;
+  let { data_3 = null } = $$props;
   {
     setContext("__svelte__", stores);
   }
@@ -50,6 +52,8 @@ const Root = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   if ($$props.form === void 0 && $$bindings.form && form !== void 0) $$bindings.form(form);
   if ($$props.data_0 === void 0 && $$bindings.data_0 && data_0 !== void 0) $$bindings.data_0(data_0);
   if ($$props.data_1 === void 0 && $$bindings.data_1 && data_1 !== void 0) $$bindings.data_1(data_1);
+  if ($$props.data_2 === void 0 && $$bindings.data_2 && data_2 !== void 0) $$bindings.data_2(data_2);
+  if ($$props.data_3 === void 0 && $$bindings.data_3 && data_3 !== void 0) $$bindings.data_3(data_3);
   let $$settled;
   let $$rendered;
   let previous_head = $$result.head;
@@ -70,7 +74,55 @@ const Root = create_ssr_component(($$result, $$props, $$bindings, slots) => {
       },
       {
         default: () => {
-          return `${validate_component(constructors[1] || missing_component, "svelte:component").$$render(
+          return `${constructors[2] ? `${validate_component(constructors[1] || missing_component, "svelte:component").$$render(
+            $$result,
+            { data: data_1, this: components[1] },
+            {
+              this: ($$value) => {
+                components[1] = $$value;
+                $$settled = false;
+              }
+            },
+            {
+              default: () => {
+                return `${constructors[3] ? `${validate_component(constructors[2] || missing_component, "svelte:component").$$render(
+                  $$result,
+                  { data: data_2, this: components[2] },
+                  {
+                    this: ($$value) => {
+                      components[2] = $$value;
+                      $$settled = false;
+                    }
+                  },
+                  {
+                    default: () => {
+                      return `${validate_component(constructors[3] || missing_component, "svelte:component").$$render(
+                        $$result,
+                        { data: data_3, form, this: components[3] },
+                        {
+                          this: ($$value) => {
+                            components[3] = $$value;
+                            $$settled = false;
+                          }
+                        },
+                        {}
+                      )}`;
+                    }
+                  }
+                )}` : `${validate_component(constructors[2] || missing_component, "svelte:component").$$render(
+                  $$result,
+                  { data: data_2, form, this: components[2] },
+                  {
+                    this: ($$value) => {
+                      components[2] = $$value;
+                      $$settled = false;
+                    }
+                  },
+                  {}
+                )}`}`;
+              }
+            }
+          )}` : `${validate_component(constructors[1] || missing_component, "svelte:component").$$render(
             $$result,
             { data: data_1, form, this: components[1] },
             {
@@ -80,7 +132,7 @@ const Root = create_ssr_component(($$result, $$props, $$bindings, slots) => {
               }
             },
             {}
-          )}`;
+          )}`}`;
         }
       }
     )}` : `${validate_component(constructors[0] || missing_component, "svelte:component").$$render(
@@ -115,7 +167,54 @@ const options = {
   root: Root,
   service_worker: false,
   templates: {
-    app: ({ head, body, assets: assets2, nonce, env }) => '<!doctype html>\n<html lang="en">\n	<head>\n		<meta charset="utf-8" />\n		<link rel="icon" href="' + assets2 + '/favicon.png" />\n		<meta name="viewport" content="width=device-width, initial-scale=1" />\n		' + head + '\n	</head>\n	<body data-sveltekit-preload-data="hover">\n		<div style="display: contents">' + body + "</div>\n	</body>\n</html>\n\n<style>\n	body {\n		margin: 0;\n		padding: 0;\n		height: 100vh;\n		font-family: Verdana, Geneva, Tahoma, sans-serif;\n	}\n</style>\n",
+    app: ({ head, body, assets: assets2, nonce, env }) => '<!doctype html>\r\n<html lang="en">\r\n\r\n<head>\r\n	<meta charset="utf-8" />\r\n	<link rel="icon" href="' + assets2 + '/Didipass_Logo.png" />\r\n	<meta name="viewport" content="width=device-width, initial-scale=1" />\r\n	' + head + '\r\n</head>\r\n\r\n<body data-sveltekit-preload-data="hover">\r\n	<div style="display: contents">' + body + `</div>\r
+</body>\r
+\r
+</html>\r
+\r
+<style>\r
+	body {\r
+		scroll-behavior: none;\r
+		overflow: hidden;\r
+		margin: 0;\r
+		padding: 0;\r
+		height: 100vh;\r
+		font-family: Verdana, Geneva, Tahoma, sans-serif;\r
+		background: linear-gradient(90deg,\r
+\r
+				rgb(14, 220, 100) 0%,\r
+				rgba(33, 106, 189, 1) 60%,\r
+				rgba(189, 56, 255, 1) 100%);\r
+\r
+		/* Make the gradient repeat to create continuous movement */\r
+		background-size: 300% 300%;\r
+\r
+		/* Apply the animation */\r
+		animation: gradientMove 5s ease infinite alternate;\r
+\r
+		:global(input[type="password"]::-ms-clear,\r
+			input[type="password"]::-ms-reveal) {\r
+			/* display: none; */\r
+			appearance: none;\r
+			/* Disable the browser's native controls */\r
+			-webkit-appearance: none;\r
+			/* For Safari */\r
+			-moz-appearance: none;\r
+			/* For Firefox */\r
+			position: relative;\r
+		}\r
+	}\r
+\r
+	@keyframes gradientMove {\r
+		0% {\r
+			background-position: left;\r
+		}\r
+\r
+		100% {\r
+			background-position: right;\r
+		}\r
+	}\r
+</style>`,
     error: ({ status, message }) => '<!doctype html>\n<html lang="en">\n	<head>\n		<meta charset="utf-8" />\n		<title>' + message + `</title>
 
 		<style>
@@ -187,7 +286,7 @@ const options = {
 		<div class="error">
 			<span class="status">` + status + '</span>\n			<div class="message">\n				<h1>' + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n"
   },
-  version_hash: "1cjhkpc"
+  version_hash: "6m3hve"
 };
 async function get_hooks() {
   return {};
