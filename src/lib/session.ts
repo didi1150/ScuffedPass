@@ -33,7 +33,8 @@ export const getSymmetricKey = () => {
 };
 
 export const readToken = () => {
-  return get(token);
+  if (isBrowser)
+    return get(token); else return "";
 };
 
 export const setToken = (newToken: string) => {

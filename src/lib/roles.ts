@@ -1,6 +1,4 @@
-import { writable } from "svelte/store";
 import { readToken } from "./session";
-import { browser } from "$app/environment";
 
 const isBrowser =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
