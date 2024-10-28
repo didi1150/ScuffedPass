@@ -15,8 +15,7 @@ export const symmetricKey = writable("");
 
 export const salt = writable("");
 export const readToken = () => {
-  if (isBrowser)
-    return get(token); else return "";
+  return get(token);
 };
 
 export const setSymmetricKey = (key: string) => {

@@ -18,9 +18,6 @@ function parseJwt(token: string): any {
   return JSON.parse(jsonPayload);
 }
 
-let token = isBrowser ? readToken() : "";
-const decodedToken: JwtPayload = isBrowser ? parseJwt(token) : "";
-
 interface Role {
   id: number;
   name: string;
@@ -32,7 +29,11 @@ interface JwtPayload {
 }
 
 export const hasRole = (roleName: string): boolean => {
-  if (isBrowser)
+  if (isBrowser) {
+
+    let token = readToken();
+    const decodedToken: JwtPayload = isBrowser ? parseJwt(token) : "";
     return decodedToken.roles.some((role) => role.name === roleName);
+  }
   else return false;
 };
