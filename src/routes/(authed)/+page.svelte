@@ -9,11 +9,19 @@
   import { decryptData } from "$lib/key";
   import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
 
+  const isBrowser =
+    typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
   let isOpen = false;
 
   export let data: { responseArray: Password[] };
-  console.log("Data: ", data);
   let websitesDecrypted = false;
+
+  $: {
+    if (data && isBrowser) {
+      decryptWebsites();
+    }
+  }
 
   const decryptWebsites = () => {
     if (!data) return;
@@ -35,8 +43,6 @@
     const encryptionKey = getSymmetricKey();
     if (!encryptionKey) {
       await goto("/unlockvault");
-    } else if (!websitesDecrypted) {
-      decryptWebsites();
     }
   });
 
