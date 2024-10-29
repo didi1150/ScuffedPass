@@ -82,10 +82,14 @@
                           );
 
                           data[targetIndex] = {
-                            email: email,
+                            email: email ? email : data[targetIndex].email,
                             iv: enc_website.iv,
-                            password: value.encryptedData,
-                            websiteURL: website,
+                            password: value.encryptedData
+                              ? value.encryptedData
+                              : data[targetIndex].password,
+                            websiteURL: website
+                              ? website
+                              : data[targetIndex].websiteURL,
                             passwordID,
                           };
                           data = [...data];
