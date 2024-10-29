@@ -38,7 +38,7 @@
       website.length == 0 &&
       email.length == 0
     ) {
-      error = "Please fill out all details"
+      error = "Please fill out all details";
     }
 
     const username = (await axiosInstance.get("/auth/account/user")).data;
@@ -82,7 +82,7 @@
                           );
 
                           data[targetIndex] = {
-                            email,
+                            email: email,
                             iv: enc_website.iv,
                             password: value.encryptedData,
                             websiteURL: website,

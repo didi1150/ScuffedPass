@@ -16,7 +16,7 @@ export const load = async () => {
       });
 
       return {
-        passwords: responseArray,
+        responseArray,
       };
     }
   } catch (error) {

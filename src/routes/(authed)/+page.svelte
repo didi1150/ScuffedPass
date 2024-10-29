@@ -11,12 +11,12 @@
 
   let isOpen = false;
 
-  export let data: { passwords: Password[] } = [];
+  export let data: Password[] | never = [];
 
   let websitesDecrypted = false;
 
   const decryptWebsites = () => {
-    data.passwords.map(async (item) => {
+    data.map(async (item) => {
       item.websiteURL = await decryptData(
         item.websiteURL,
         item.iv,
@@ -25,7 +25,7 @@
     });
     // For reactivity
     setTimeout(() => {
-      data.passwords = data.passwords;
+      data = data;
       websitesDecrypted = true;
     }, 5);
   };
@@ -45,14 +45,14 @@
 
 <section>
   <Modal bind:isOpen>
-    <AddPassword bind:isOpen bind:data={data.passwords}></AddPassword>
+    <AddPassword bind:isOpen bind:data></AddPassword>
   </Modal>
   {#if websitesDecrypted}
     <MediaQuery query={mobileQuery}>
-      <MobileVault tableData={data.passwords}></MobileVault>
+      <MobileVault tableData={data}></MobileVault>
     </MediaQuery>
     <MediaQuery query={desktopQuery}>
-      <DesktopVault tableData={data.passwords}></DesktopVault>
+      <DesktopVault tableData={data}></DesktopVault>
     </MediaQuery>
   {/if}
   <button

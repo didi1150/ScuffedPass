@@ -97,11 +97,8 @@
       <tbody>
         {#each tableData as row}
           <tr>
-            {#each Object.entries(row) as [key, value]}
-              {#if key !== "iv" && key !== "passwordID" && key !== "password"}
-                <td>{value}</td>
-              {/if}
-            {/each}
+            <td>{row.websiteURL}</td>
+            <td>{row.email}</td>
             <td>
               <div class="copy-container">
                 <button
