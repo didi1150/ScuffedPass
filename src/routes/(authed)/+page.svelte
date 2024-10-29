@@ -1,50 +1,41 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { axiosInstance } from "$lib/interceptors/axios";
-  import { goto, invalidate, invalidateAll } from "$app/navigation";
-  import { checkToken } from "$lib/interceptors/authenticationCheck";
-  import { page } from "$app/stores";
-  import {
-    getSymmetricKey,
-    setRefreshToken,
-    setSalt,
-    setToken,
-  } from "$lib/session";
-  import { hasRole } from "$lib/roles";
+  import { goto } from "$app/navigation";
+  import { getSymmetricKey } from "$lib/session";
   import Modal from "$lib/components/modals/Modal.svelte";
-  import ChangeMasterPassword from "$lib/components/modals/content/ChangeMasterPassword.svelte";
   import DesktopVault from "$lib/components/DesktopVault.svelte";
   import MobileVault from "$lib/components/MobileVault.svelte";
   import MediaQuery from "$lib/components/MediaQuery.svelte";
-  import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
   import { decryptData } from "$lib/key";
+  import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
 
   let isOpen = false;
-  let mode = "changemaster";
 
   export let data: { passwords: Password[] } = [];
 
-  let openModal = false;
-
   let websitesDecrypted = false;
+
+  const decryptWebsites = () => {
+    data.passwords.map(async (item) => {
+      item.websiteURL = await decryptData(
+        item.websiteURL,
+        item.iv,
+        getSymmetricKey()
+      );
+    });
+    // For reactivity
+    setTimeout(() => {
+      data.passwords = data.passwords;
+      websitesDecrypted = true;
+    }, 5);
+  };
 
   onMount(async () => {
     const encryptionKey = getSymmetricKey();
     if (!encryptionKey) {
       await goto("/unlockvault");
     } else if (!websitesDecrypted) {
-      data.passwords.map(async (item) => {
-        item.websiteURL = await decryptData(
-          item.websiteURL,
-          item.iv,
-          getSymmetricKey()
-        );
-      });
-      // For reactivity
-      setTimeout(() => {
-        data.passwords = data.passwords;
-        websitesDecrypted = true;
-      }, 5);
+      decryptWebsites();
     }
   });
 
@@ -54,12 +45,7 @@
 
 <section>
   <Modal bind:isOpen>
-    {#if mode === "changemaster"}
-      <ChangeMasterPassword bind:isOpen></ChangeMasterPassword>
-    {/if}
-  </Modal>
-  <Modal bind:isOpen={openModal}>
-    <AddPassword bind:isOpen={openModal}></AddPassword>
+    <AddPassword bind:isOpen bind:data={data.passwords}></AddPassword>
   </Modal>
   {#if websitesDecrypted}
     <MediaQuery query={mobileQuery}>
@@ -69,7 +55,12 @@
       <DesktopVault tableData={data.passwords}></DesktopVault>
     </MediaQuery>
   {/if}
-  <button class="add" on:click={() => (openModal = true)}>Add</button>
+  <button
+    class="add"
+    on:click={() => {
+      isOpen = true;
+    }}>Add</button
+  >
 </section>
 
 <style>

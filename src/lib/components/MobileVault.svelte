@@ -1,11 +1,8 @@
 <script lang="ts">
   import Modal from "$lib/components/modals/Modal.svelte";
   import ConfirmAction from "$lib/components/modals/content/ConfirmAction.svelte";
-  import AddPassword from "$lib/components/modals/content/AddPassword.svelte";
   import EditPasswordDetails from "$lib/components/modals/content/EditPasswordDetails.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
-  import { invalidateAll } from "$app/navigation";
-  import { onMount } from "svelte";
   import { decryptData } from "$lib/key";
   import { getSymmetricKey } from "$lib/session";
   export let tableData: Password[] = [];
@@ -14,16 +11,13 @@
   let mode = "edit";
 
   let selectedPasswordID: number;
-
-  onMount(async () => {
-    tableData.forEach(async (value) => {
-      let decryptedPW = await decryptData(
-        value.password,
-        value.iv,
-        getSymmetricKey()
-      );
-      decryptedPasswords.push({ password: decryptedPW, id: value.passwordID });
-    });
+  tableData.forEach(async (value) => {
+    let decryptedPW = await decryptData(
+      value.password,
+      value.iv,
+      getSymmetricKey()
+    );
+    decryptedPasswords.push({ password: decryptedPW, id: value.passwordID });
   });
 
   const getDecryptedPassword = (id: number) => {
@@ -65,18 +59,24 @@
           .then((response) => {
             if (response.status === 200) {
               isOpen = false;
+              const targetIndex = tableData.findIndex((passwordValue) => {
+                return passwordValue.passwordID === selectedPasswordID;
+              });
+
+              tableData.splice(targetIndex, 1);
+              tableData = [...tableData];
             }
-          })
-          .finally(() => invalidateAll());
+          });
       }}
       question="Do you want to delete this password?"
       bind:isOpen
     ></ConfirmAction>
   {:else if mode === "edit"}
-    <EditPasswordDetails bind:passwordID={selectedPasswordID} bind:isOpen
+    <EditPasswordDetails
+      bind:passwordID={selectedPasswordID}
+      bind:isOpen
+      bind:data={tableData}
     ></EditPasswordDetails>
-  {:else if mode === "add"}
-    <AddPassword></AddPassword>
   {/if}
 </Modal>
 

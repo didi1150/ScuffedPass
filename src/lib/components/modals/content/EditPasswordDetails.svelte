@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { invalidateAll } from "$app/navigation";
   import { axiosInstance } from "$lib/interceptors/axios";
   import {
     base64ToUint8Array,
@@ -9,10 +8,11 @@
     hashMasterPassword,
   } from "$lib/key";
   import InputBox from "$lib/components/InputBox.svelte";
-  import { getSalt, salt } from "$lib/session";
+  import { getSalt } from "$lib/session";
 
   export let passwordID: number;
   export let isOpen: boolean;
+  export let data: Password[];
   let website: string = "";
   let email: string = "";
   let password: string = "";
@@ -38,7 +38,7 @@
       website.length == 0 &&
       email.length == 0
     ) {
-      isOpen = false;
+      error = "Please fill out all details"
     }
 
     const username = (await axiosInstance.get("/auth/account/user")).data;
@@ -75,7 +75,20 @@
                       .then((res) => {
                         if (res.status === 200) {
                           isOpen = false;
-                          invalidateAll();
+                          const targetIndex = data.findIndex(
+                            (passwordValue) => {
+                              return passwordValue.passwordID === passwordID;
+                            }
+                          );
+
+                          data[targetIndex] = {
+                            email,
+                            iv: enc_website.iv,
+                            password: value.encryptedData,
+                            websiteURL: website,
+                            passwordID,
+                          };
+                          data = [...data];
                         }
                       });
                   }
@@ -141,6 +154,7 @@
   }
   .error {
     color: red;
+    font-weight: bold;
   }
   form {
     display: flex;

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { invalidateAll } from "$app/navigation";
   import InputBox from "$lib/components/InputBox.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
   import {
@@ -13,55 +12,59 @@
   export let isOpen = false;
   let error = false;
 
+  export let data: Password[] = [];
+
   const handleSubmit = async () => {
     const username = (await axiosInstance.get("/auth/account/user")).data;
     const salt = await getSalt(username);
-    console.log(salt);
     const { hashPW } = await hashMasterPassword(username, masterPassword, salt);
-    axiosInstance
-      .post("/auth/account/user/encryptionKey", { hash: hashPW })
-      .then((response) => {
-        if (response.status === 200) {
-          console.log(response.data);
-          const { encryptionKey, privateKeyMaster, iv } = response.data;
-          decryptPrivateKey(privateKeyMaster, masterPassword, salt, iv)
-            .then((decryptedPrivateKey) => {
-              decryptSymmetricKeyWithPrivateKey(
-                encryptionKey,
-                decryptedPrivateKey
-              ).then(async (symmetricKey) => {
-                const enc_website = await encryptData(website, symmetricKey);
-                encryptData(
-                  password,
-                  symmetricKey,
-                  base64ToUint8Array(enc_website.iv)
-                ).then((value) => {
-                  if (!value) error = true;
-                  else {
-                    axiosInstance
-                      .post("/vault", {
-                        website: enc_website.encryptedData,
-                        email,
-                        password: value.encryptedData,
-                        iv: enc_website.iv,
-                      })
-                      .then((res) => {
-                        if (res.status === 200) {
-                          isOpen = false;
-                          invalidateAll();
-                        }
-                      });
-                  }
-                });
-              });
-            })
-
-            .catch((reason) => {
-              console.error(reason);
-              error = true;
+    try {
+      const response = await axiosInstance.post(
+        "/auth/account/user/encryptionKey",
+        { hash: hashPW }
+      );
+      if (response.status === 200) {
+        const { encryptionKey, privateKeyMaster, iv } = response.data;
+        const decryptedPrivateKey = await decryptPrivateKey(
+          privateKeyMaster,
+          masterPassword,
+          salt,
+          iv
+        );
+        const symmetricKey = await decryptSymmetricKeyWithPrivateKey(
+          encryptionKey,
+          decryptedPrivateKey
+        );
+        const enc_website = await encryptData(website, symmetricKey);
+        const value = await encryptData(
+          password,
+          symmetricKey,
+          base64ToUint8Array(enc_website.iv)
+        );
+        if (!value) error = true;
+        else {
+          const res = await axiosInstance.post("/vault", {
+            website: enc_website.encryptedData,
+            email,
+            password: value.encryptedData,
+            iv: enc_website.iv,
+          });
+          if (res.status === 200) {
+            isOpen = false;
+            data.push({
+              email: email,
+              websiteURL: website,
+              iv: enc_website.iv,
+              password: value.encryptedData,
+              passwordID: res.data.passwordID,
             });
+            data = [...data];
+          }
         }
-      });
+      }
+    } catch {
+      error = true;
+    }
   };
 
   let email = "",
@@ -96,7 +99,7 @@
   ></InputBox>
   <button type="submit">Save</button>
   {#if error}
-    <p class="error">Oops, something went wrong</p>
+    <p class="error">Wrong Credentials</p>
   {/if}
 </form>
 

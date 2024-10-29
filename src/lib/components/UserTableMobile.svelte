@@ -2,14 +2,10 @@
   import Modal from "$lib/components/modals/Modal.svelte";
   import ConfirmAction from "$lib/components/modals/content/ConfirmAction.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
-  import { invalidateAll } from "$app/navigation";
-  import { onMount } from "svelte";
-  export let users;
+  export let users: User[];
   let isOpen = false;
   let mode: "delete" | "lock" = "delete";
   let selectedUserId: number;
-
-  onMount(async () => {});
 </script>
 
 <Modal bind:isOpen>
@@ -21,9 +17,17 @@
         axiosInstance
           .delete(`/admin/delete?id=${selectedUserId}`)
           .then((result) => {
-            if (result.status === 200) isOpen = false;
-          })
-          .finally(invalidateAll);
+            if (result.status === 200) {
+              isOpen = false;
+
+              const targetIndex = users.findIndex((us) => {
+                return us.id === selectedUserId;
+              });
+
+              users.splice(targetIndex, 1);
+              users = [...users];
+            }
+          });
       }}
       question="Do you want to delete this user?"
       bind:isOpen
@@ -136,10 +140,6 @@
     font-size: 1.5em;
   }
 
-  .website {
-    font-weight: bold;
-  }
-
   .email {
     font-weight: lighter;
   }
@@ -182,7 +182,7 @@
     border: none;
   }
 
-  @media (max-width: 360px) {
+  @media (max-width: 600px) {
     ul {
       height: calc(100% - 150px);
       border: none;

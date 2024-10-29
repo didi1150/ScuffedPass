@@ -1,4 +1,4 @@
-import { goto, invalidateAll } from "$app/navigation";
+import { goto } from "$app/navigation";
 import {
   getRefreshToken,
   readToken,
@@ -35,7 +35,6 @@ const refreshTokenIfNeeded = async (): Promise<string | null> => {
       setToken(response.data.access_token);
       setSalt(response.data.salt);
       setRefreshToken(response.data.refresh_token);
-      invalidateAll();
       return response.data.access_token;
     }
   } catch (error) {
@@ -43,7 +42,6 @@ const refreshTokenIfNeeded = async (): Promise<string | null> => {
     setToken("");
     setSalt("");
     setRefreshToken("");
-    invalidateAll();
     goto("/login");
   }
   return null;

@@ -4,8 +4,10 @@
   import { hasRole } from "$lib/roles";
   import { setRefreshToken, setSalt, setToken } from "$lib/session";
   export let isVault = false;
-
+  export let mode: "lock" | "change" = "lock";
   let isOpen = false;
+
+  export let changeMasterPassword = false;
 
   $: isAdmin = hasRole("admin");
 
@@ -38,18 +40,29 @@
 <ul class="list">
   {#if !isVault}
     <li>
-      <a href="/"><h2>Vault</h2></a>
+      <a href="/" on:click={() => (isOpen = false)}><h2>Vault</h2></a>
     </li>{/if}
   {#if isAdmin}
     <li>
-      <a href="/users"><h2>Users</h2></a>
+      <a href="/users" on:click={() => (isOpen = false)}><h2>Users</h2></a>
     </li>
   {/if}
   <li>
-    <button on:click><h2>Change Masterpassword</h2></button>
+    <button
+      on:click={() => {
+        changeMasterPassword = true;
+        mode = "change";
+        isOpen = false;
+      }}><h2 class="change">Change Masterpassword</h2></button
+    >
   </li>
   <li>
-    <button on:click={logout}><h2>Logout</h2></button>
+    <button
+      on:click={() => {
+        isOpen = false;
+        logout();
+      }}><h2>Logout</h2></button
+    >
   </li>
 </ul>
 
@@ -111,6 +124,10 @@
     border: none;
     font-size: 1em;
     margin-bottom: 10px;
+  }
+
+  .change {
+    word-break: break-all;
   }
 
   .list li a {
