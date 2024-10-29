@@ -90,7 +90,7 @@
   .close {
     position: absolute;
     left: 4px;
-    top: 4px;
+    top: 4%;
     font-size: 2em;
     display: flex;
     justify-content: center;
@@ -115,12 +115,25 @@
     }
   }
 
+  @media (max-height: 690px) {
+    .modal-content {
+      height: 100%;
+    }
+  }
+
+  @media (max-height: 300px) {
+    .modal-content {
+      height: 100%;
+      width: 100%;
+    }
+  }
+
   @media (max-width: 640px) {
     .modal-content {
       position: relative;
       /* width: 100%;
       height: 100%; */
-      max-width: 80%;
+      max-width: 100%;
       padding: 20px;
       /* border: none; */
     }
