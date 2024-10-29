@@ -11,12 +11,13 @@
 
   let isOpen = false;
 
-  export let data: Password[] | never = [];
-
+  export let data: { responseArray: Password[] };
+  console.log("Data: ", data);
   let websitesDecrypted = false;
 
   const decryptWebsites = () => {
-    data.map(async (item) => {
+    if (!data) return;
+    data.responseArray.map(async (item) => {
       item.websiteURL = await decryptData(
         item.websiteURL,
         item.iv,
@@ -45,14 +46,14 @@
 
 <section>
   <Modal bind:isOpen>
-    <AddPassword bind:isOpen bind:data></AddPassword>
+    <AddPassword bind:isOpen bind:data={data.responseArray}></AddPassword>
   </Modal>
   {#if websitesDecrypted}
     <MediaQuery query={mobileQuery}>
-      <MobileVault tableData={data}></MobileVault>
+      <MobileVault tableData={data.responseArray}></MobileVault>
     </MediaQuery>
     <MediaQuery query={desktopQuery}>
-      <DesktopVault tableData={data}></DesktopVault>
+      <DesktopVault tableData={data.responseArray}></DesktopVault>
     </MediaQuery>
   {/if}
   <button
