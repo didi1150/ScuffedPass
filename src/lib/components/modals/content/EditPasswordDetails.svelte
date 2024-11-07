@@ -42,11 +42,6 @@
       return;
     }
 
-    const allIVFieldsFilled =
-      password.trim().length !== 0 &&
-      repeat.trim().length !== 0 &&
-      website.trim().length !== 0;
-
     const username = (await axiosInstance.get("/auth/account/user")).data;
 
     const salt = await getSalt(username);
@@ -65,7 +60,7 @@
                 const enc_website = await encryptData(
                   website,
                   symmetricKey,
-                  allIVFieldsFilled ? iv : null,
+                  iv,
                 );
                 encryptData(
                   password,
@@ -80,7 +75,7 @@
                         website: enc_website.encryptedData,
                         email,
                         password: value.encryptedData,
-                        iv: allIVFieldsFilled ? enc_website.iv : "",
+                        iv,
                       })
                       .then((res) => {
                         if (res.status === 200) {
@@ -96,7 +91,7 @@
                               email.length !== 0
                                 ? email
                                 : data[targetIndex].email,
-                            iv: allIVFieldsFilled ? enc_website.iv : "",
+                            iv: iv,
                             password: value.encryptedData
                               ? value.encryptedData
                               : data[targetIndex].password,
