@@ -4,6 +4,10 @@ import { genSalt } from "$lib/gensalt";
 const isBrowser =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
+const isStringEmpty = (input: string) => {
+  return !input || input.trim() === "";
+}
+
 export const hashMasterPassword = async (
   email: string,
   masterPassword: string,
@@ -187,7 +191,7 @@ export const encryptPrivateKey = async (
   // Derive a key from the master password
   const masterKey = await deriveMasterKeyFromPassword(masterPassword, salt);
 
-  if (!masterKey) return "";
+  if (!masterKey || isStringEmpty(masterPassword)) return "";
 
   // Encrypt the private key using AES-GCM
   const privateKeyBuffer = base64ToArrayBuffer(privateKey);
@@ -370,10 +374,14 @@ export const decryptSymmetricKeyWithPrivateKey = async (
 
 // Encrypts data (e.g., password) with the symmetric AES-GCM key
 export const encryptData = async (
-  password: string,
+  input: string,
   symmetricKeyBase64: string,
   iv?: Uint8Array
 ) => {
+  if (isStringEmpty(input)) return {
+    encryptedData: "",
+    iv: "", // Store the IV alongside the encrypted data
+  };
   const symmetricKeyBuffer = base64ToArrayBuffer(symmetricKeyBase64);
   const symmetricKey = await crypto.subtle.importKey(
     "raw",
@@ -384,7 +392,7 @@ export const encryptData = async (
   );
 
   if (!iv) iv = crypto.getRandomValues(new Uint8Array(12)); // Generate random IV
-  const encodedPassword = new TextEncoder().encode(password);
+  const encodedPassword = new TextEncoder().encode(input);
 
   // Encrypt password
   const encryptedPasswordBuffer = await crypto.subtle.encrypt(
