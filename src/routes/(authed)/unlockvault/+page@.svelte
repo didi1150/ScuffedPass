@@ -17,6 +17,8 @@
   } from "$lib/session";
   import { onMount } from "svelte";
 
+  let error = false;
+
   onMount(() => {
     if (getSymmetricKey()) goto("/");
   });
@@ -24,25 +26,29 @@
   const handleSubmit = async () => {
     const email = (await axiosInstance.get("/auth/account/user")).data;
     const pwSalt = await getSalt(email);
-    const { hashPW } = await hashMasterPassword(email, password, pwSalt);
-    const axiosResponse = await axiosInstance.post(
-      "/auth/account/user/encryptionKey",
-      { hash: hashPW }
-    );
+    try {
+      const { hashPW } = await hashMasterPassword(email, password, pwSalt);
+      const axiosResponse = await axiosInstance.post(
+        "/auth/account/user/encryptionKey",
+        { hash: hashPW }
+      );
 
-    const { encryptionKey, privateKeyMaster, iv, salt } = axiosResponse.data;
-    const decryptedPrivateKey = await decryptPrivateKey(
-      privateKeyMaster,
-      password,
-      salt,
-      iv
-    );
-    const symmKey = await decryptSymmetricKeyWithPrivateKey(
-      encryptionKey,
-      decryptedPrivateKey
-    );
-    setSymmetricKey(symmKey);
-    await goto("/");
+      const { encryptionKey, privateKeyMaster, iv, salt } = axiosResponse.data;
+      const decryptedPrivateKey = await decryptPrivateKey(
+        privateKeyMaster,
+        password,
+        salt,
+        iv
+      );
+      const symmKey = await decryptSymmetricKeyWithPrivateKey(
+        encryptionKey,
+        decryptedPrivateKey
+      );
+      setSymmetricKey(symmKey);
+      await goto("/");
+    } catch {
+      error = true;
+    }
   };
 
   const handleLogout = async () => {
@@ -73,10 +79,17 @@
       <button class="submit" on:submit={handleSubmit}>Unlock</button>
       <button class="logout" on:click={handleLogout}>Logout</button>
     </div>
+    {#if error}
+      <p class="error">Invalid Password</p>
+    {/if}
   </form>
 </div>
 
 <style>
+  .error {
+    color: rgb(137, 0, 0);
+    font-weight: bold;
+  }
   .frame {
     width: 100%;
     height: 100%;
@@ -106,7 +119,7 @@
     border-radius: 20px;
     width: 200px;
     font-weight: 700;
-    margin: 0 15px 20px 0;
+    margin: 0 15px 0px 0;
   }
 
   .control {
@@ -126,6 +139,9 @@
     form {
       width: 300px;
       height: fit-content;
+    }
+    button {
+      margin-bottom: 20px;
     }
   }
 

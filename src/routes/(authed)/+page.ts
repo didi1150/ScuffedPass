@@ -1,12 +1,9 @@
 import { goto } from "$app/navigation";
 import { axiosInstance } from "$lib/interceptors/axios.js";
 export const ssr = false;
-export const load = async ({ url }) => {
-  //   if (url.pathname !== "/") return;
-  // console.log("Loading Passwords...");
+export const load = async () => {
   try {
     const response = await axiosInstance.get<Password>("/vault");
-    // console.log(response.data);
     if (response.data && Array.isArray(response.data)) {
       const responseArray: Password[] = response.data.map((item: Password) => {
         return {
@@ -19,7 +16,7 @@ export const load = async ({ url }) => {
       });
 
       return {
-        passwords: responseArray,
+        responseArray,
       };
     }
   } catch (error) {

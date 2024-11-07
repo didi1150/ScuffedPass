@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { invalidateAll } from "$app/navigation";
-  export let users;
   import Modal from "$lib/components/modals/Modal.svelte";
   import ConfirmAction from "$lib/components/modals/content/ConfirmAction.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
+
+  export let users: User[];
   let isOpen = false;
   let mode: "delete" | "lock" = "delete";
   let selectedUserId: number;
@@ -19,9 +19,16 @@
         axiosInstance
           .delete(`/admin/delete?id=${selectedUserId}`)
           .then((result) => {
-            if (result.status === 200) isOpen = false;
-          })
-          .finally(invalidateAll);
+            if (result.status === 200) {
+              isOpen = false;
+              const targetIndex = users.findIndex((us) => {
+                return us.id === selectedUserId;
+              });
+
+              users.splice(targetIndex, 1);
+              users = [...users];
+            }
+          });
       }}
     ></ConfirmAction>
   {/if}

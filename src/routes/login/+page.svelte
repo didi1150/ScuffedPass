@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto, invalidateAll } from "$app/navigation";
+  import { goto } from "$app/navigation";
   import RecoveryKey from "$lib/components/modals/content/RecoveryKey.svelte";
   import Modal from "$lib/components/modals/Modal.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
@@ -16,7 +16,12 @@
     hashMasterPassword,
     uint8ArrayToBase64,
   } from "$lib/key";
-  import { getSalt, refreshToken, setSymmetricKey, token } from "$lib/session";
+  import {
+    getSalt,
+    setRefreshToken,
+    setSymmetricKey,
+    setToken,
+  } from "$lib/session";
   let email = "",
     password = "";
 
@@ -24,90 +29,85 @@
   let recoveryKey = "";
   let isOpen = false;
 
-  $: handleSubmit = async () => {
-    error = false;
-    const salt = await getSalt(email);
-    const { hashPW } = await hashMasterPassword(email, password, salt);
-    axiosInstance
-      .post("auth/account/authenticate", {
+  const handleSubmit = async () => {
+    try {
+      error = false;
+      const salt = await getSalt(email);
+      const { hashPW } = await hashMasterPassword(email, password, salt);
+      const res = await axiosInstance.post("auth/account/authenticate", {
         email,
         password: hashPW,
-      })
-      .then(async (res) => {
-        try {
-          if (res.status === 200) {
-            token.set(res.data.access_token);
-            refreshToken.set(res.data.refresh_token);
-            if (res.data.first_login) {
-              const { publicKey, privateKey } = await generateKeyPair();
-              const localRecoveryKey = generateRecoveryKey();
-              const symmKey = await generateSymmetricKey();
-              setSymmetricKey(symmKey);
-              const encryptedSymmetricKey =
-                await encryptSymmetricKeyWithPublicKey(symmKey, publicKey);
-              const iv = generateIV();
-              const masterKey = await encryptPrivateKey(
-                privateKey,
-                password,
-                salt,
-                iv
-              );
-
-              const recoveryEncKey = await encryptPrivateKeyWithRecoverKey(
-                privateKey,
-                localRecoveryKey,
-                salt,
-                iv
-              );
-              if (!masterKey || !recoveryEncKey)
-                throw Error("Couldn't encrypt private key");
-              else {
-                const cryptoAttempt = await axiosInstance.post(
-                  "/auth/account/user/crypto",
-                  {
-                    publicKey,
-                    privateKeyMaster: masterKey,
-                    privateKeyRecovery: recoveryEncKey,
-                    iv: uint8ArrayToBase64(iv),
-                    symmetricKey: encryptedSymmetricKey,
-                  }
-                );
-                if (cryptoAttempt.status === 200) {
-                  recoveryKey = localRecoveryKey;
-                  isOpen = true;
-                }
-              }
-            } else {
-              const cryptoResponse = await axiosInstance.post(
-                "/auth/account/user/encryptionKey",
-                { hash: hashPW }
-              );
-              const { encryptionKey, privateKeyMaster, iv, salt } =
-                cryptoResponse.data;
-              const decryptedPrivateKey = await decryptPrivateKey(
-                privateKeyMaster,
-                password,
-                salt,
-                iv
-              );
-              const symmKey = await decryptSymmetricKeyWithPrivateKey(
-                encryptionKey,
-                decryptedPrivateKey
-              );
-              setSymmetricKey(symmKey);
-            }
-            await goto("/");
-          } else {
-            invalidateAll().then(() => (error = true));
-          }
-        } catch (error) {
-          invalidateAll().then(() => (error = true));
-        }
-      })
-      .catch((reason) => {
-        // console.error(reason);
-        invalidateAll().then(() => (error = true));
       });
+      if (res.status === 200) {
+        setToken(res.data.access_token);
+        setRefreshToken(res.data.refresh_token);
+        if (res.data.first_login) {
+          const { publicKey, privateKey } = await generateKeyPair();
+          const localRecoveryKey = generateRecoveryKey();
+          const symmKey = await generateSymmetricKey();
+          setSymmetricKey(symmKey);
+          const encryptedSymmetricKey = await encryptSymmetricKeyWithPublicKey(
+            symmKey,
+            publicKey
+          );
+          const iv = generateIV();
+          const masterKey = await encryptPrivateKey(
+            privateKey,
+            password,
+            salt,
+            iv
+          );
+
+          const recoveryEncKey = await encryptPrivateKeyWithRecoverKey(
+            privateKey,
+            localRecoveryKey,
+            salt,
+            iv
+          );
+          if (!masterKey || !recoveryEncKey)
+            throw Error("Couldn't encrypt private key");
+          else {
+            const cryptoAttempt = await axiosInstance.post(
+              "/auth/account/user/crypto",
+              {
+                publicKey,
+                privateKeyMaster: masterKey,
+                privateKeyRecovery: recoveryEncKey,
+                iv: uint8ArrayToBase64(iv),
+                symmetricKey: encryptedSymmetricKey,
+              }
+            );
+            if (cryptoAttempt.status === 200) {
+              recoveryKey = localRecoveryKey;
+              isOpen = true;
+            }
+          }
+        } else {
+          const cryptoResponse = await axiosInstance.post(
+            "/auth/account/user/encryptionKey",
+            { hash: hashPW }
+          );
+          const { encryptionKey, privateKeyMaster, iv, salt } =
+            cryptoResponse.data;
+          const decryptedPrivateKey = await decryptPrivateKey(
+            privateKeyMaster,
+            password,
+            salt,
+            iv
+          );
+          const symmKey = await decryptSymmetricKeyWithPrivateKey(
+            encryptionKey,
+            decryptedPrivateKey
+          );
+          setSymmetricKey(symmKey);
+        }
+        await goto("/");
+      } else {
+        error = true;
+      }
+    } catch {
+      error = true;
+    }
   };
 </script>
 
@@ -169,7 +169,7 @@
         <a class="forgot" href="/resetpw">Forgot Password?</a>
       </div>
       {#if error}
-        <p class="error">Please try again</p>
+        <p class="error">Invalid credentials</p>
       {/if}
     </form>
   </div>
@@ -263,8 +263,9 @@
   }
   .error {
     font-size: 0.9em;
-    color: red;
+    color: darkred;
     text-align: center;
+    font-weight: bold;
   }
 
   .advanced {

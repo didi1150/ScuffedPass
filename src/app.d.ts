@@ -15,6 +15,13 @@ declare global {
     websiteURL: string;
     iv: string;
   }
+  interface User {
+    email: string;
+    createdAt: string;
+    enabled: boolean;
+    id: number;
+    locked: false;
+  }
 }
 
 export {};

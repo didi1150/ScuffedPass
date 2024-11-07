@@ -8,12 +8,54 @@
       "_internal.js"
     ]
   },
-  "_axios.js": {
-    "file": "chunks/axios.js",
-    "name": "axios",
+  "_ChangeMasterPassword.svelte_svelte_type_style_lang.js": {
+    "file": "_app/immutable/assets/ChangeMasterPassword.J77ktMSb.css",
+    "src": "_ChangeMasterPassword.svelte_svelte_type_style_lang.js"
+  },
+  "_ConfirmAction.svelte_svelte_type_style_lang.js": {
+    "file": "_app/immutable/assets/ConfirmAction.YF3wZ1IZ.css",
+    "src": "_ConfirmAction.svelte_svelte_type_style_lang.js"
+  },
+  "_InputBox.js": {
+    "file": "chunks/InputBox.js",
+    "name": "InputBox",
     "imports": [
-      "_index.js",
-      "_utils.js"
+      "_ssr.js"
+    ],
+    "css": [
+      "_app/immutable/assets/InputBox.y5Bc8sc3.css"
+    ]
+  },
+  "_InputBox.svelte_svelte_type_style_lang.js": {
+    "file": "_app/immutable/assets/InputBox.y5Bc8sc3.css",
+    "src": "_InputBox.svelte_svelte_type_style_lang.js"
+  },
+  "_MediaQuery.js": {
+    "file": "chunks/MediaQuery.js",
+    "name": "MediaQuery",
+    "imports": [
+      "_ssr.js"
+    ]
+  },
+  "_Modal.js": {
+    "file": "chunks/Modal.js",
+    "name": "Modal",
+    "imports": [
+      "_ssr.js"
+    ],
+    "css": [
+      "_app/immutable/assets/Modal.BnB3uqgn.css"
+    ]
+  },
+  "_RecoveryKey.js": {
+    "file": "chunks/RecoveryKey.js",
+    "name": "RecoveryKey",
+    "imports": [
+      "_ssr.js",
+      "_client.js"
+    ],
+    "css": [
+      "_app/immutable/assets/RecoveryKey.BG33QHLb.css"
     ]
   },
   "_client.js": {
@@ -29,6 +71,10 @@
   },
   "_index.js": {
     "file": "chunks/index.js",
+    "name": "index"
+  },
+  "_index2.js": {
+    "file": "chunks/index2.js",
     "name": "index",
     "imports": [
       "_utils.js"
@@ -41,19 +87,27 @@
       "_ssr.js"
     ]
   },
+  "_roles.js": {
+    "file": "chunks/roles.js",
+    "name": "roles",
+    "imports": [
+      "_session.js"
+    ]
+  },
+  "_session.js": {
+    "file": "chunks/session.js",
+    "name": "session",
+    "imports": [
+      "_index2.js",
+      "_client.js",
+      "_utils.js"
+    ]
+  },
   "_ssr.js": {
     "file": "chunks/ssr.js",
     "name": "ssr",
     "imports": [
       "_utils.js"
-    ]
-  },
-  "_stores.js": {
-    "file": "chunks/stores.js",
-    "name": "stores",
-    "imports": [
-      "_ssr.js",
-      "_client.js"
     ]
   },
   "_utils.js": {
@@ -68,7 +122,7 @@
     "imports": [
       "_utils.js",
       "_ssr.js",
-      "_stores.js"
+      "_client.js"
     ]
   },
   "node_modules/@sveltejs/kit/src/runtime/components/layout.svelte": {
@@ -87,21 +141,147 @@
     "isEntry": true,
     "imports": [
       "_internal.js",
+      "_index.js",
       "_exports.js",
+      "_index2.js"
+    ]
+  },
+  "src/routes/(authed)/(admin)/+layout.ts": {
+    "file": "entries/pages/(authed)/(admin)/_layout.ts.js",
+    "name": "entries/pages/(authed)/(admin)/_layout.ts",
+    "src": "src/routes/(authed)/(admin)/+layout.ts",
+    "isEntry": true,
+    "imports": [
+      "_roles.js",
       "_index.js"
     ]
   },
-  "src/routes/+page.svelte": {
-    "file": "entries/pages/_page.svelte.js",
-    "name": "entries/pages/_page.svelte",
-    "src": "src/routes/+page.svelte",
+  "src/routes/(authed)/(admin)/users/+page.svelte": {
+    "file": "entries/pages/(authed)/(admin)/users/_page.svelte.js",
+    "name": "entries/pages/(authed)/(admin)/users/_page.svelte",
+    "src": "src/routes/(authed)/(admin)/users/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_utils.js",
       "_ssr.js",
-      "_axios.js",
+      "_MediaQuery.js",
       "_client.js",
-      "_stores.js"
+      "_Modal.js",
+      "_session.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.DjAiI8F8.css",
+      "_app/immutable/assets/ConfirmAction.YF3wZ1IZ.css"
+    ]
+  },
+  "src/routes/(authed)/(admin)/users/+page.ts": {
+    "file": "entries/pages/(authed)/(admin)/users/_page.ts.js",
+    "name": "entries/pages/(authed)/(admin)/users/_page.ts",
+    "src": "src/routes/(authed)/(admin)/users/+page.ts",
+    "isEntry": true,
+    "imports": [
+      "_session.js"
+    ]
+  },
+  "src/routes/(authed)/+layout.svelte": {
+    "file": "entries/pages/(authed)/_layout.svelte.js",
+    "name": "entries/pages/(authed)/_layout.svelte",
+    "src": "src/routes/(authed)/+layout.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ssr.js",
+      "_Modal.js",
+      "_session.js",
+      "_client.js",
+      "_roles.js",
+      "_MediaQuery.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_layout.DYCm20qB.css",
+      "_app/immutable/assets/InputBox.y5Bc8sc3.css",
+      "_app/immutable/assets/ChangeMasterPassword.J77ktMSb.css"
+    ]
+  },
+  "src/routes/(authed)/+layout.ts": {
+    "file": "entries/pages/(authed)/_layout.ts.js",
+    "name": "entries/pages/(authed)/_layout.ts",
+    "src": "src/routes/(authed)/+layout.ts",
+    "isEntry": true,
+    "imports": [
+      "_client.js",
+      "_session.js",
+      "_index.js"
+    ]
+  },
+  "src/routes/(authed)/+page.svelte": {
+    "file": "entries/pages/(authed)/_page.svelte.js",
+    "name": "entries/pages/(authed)/_page.svelte",
+    "src": "src/routes/(authed)/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ssr.js",
+      "_session.js",
+      "_client.js",
+      "_Modal.js",
+      "_InputBox.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.BQ9sxuME.css",
+      "_app/immutable/assets/ChangeMasterPassword.J77ktMSb.css",
+      "_app/immutable/assets/ConfirmAction.YF3wZ1IZ.css",
+      "_app/immutable/assets/InputBox.y5Bc8sc3.css"
+    ]
+  },
+  "src/routes/(authed)/+page.ts": {
+    "file": "entries/pages/(authed)/_page.ts.js",
+    "name": "entries/pages/(authed)/_page.ts",
+    "src": "src/routes/(authed)/+page.ts",
+    "isEntry": true,
+    "imports": [
+      "_client.js",
+      "_session.js"
+    ]
+  },
+  "src/routes/(authed)/unlockvault/+page.ts": {
+    "file": "entries/pages/(authed)/unlockvault/_page.ts.js",
+    "name": "entries/pages/(authed)/unlockvault/_page.ts",
+    "src": "src/routes/(authed)/unlockvault/+page.ts",
+    "isEntry": true
+  },
+  "src/routes/(authed)/unlockvault/+page@.svelte": {
+    "file": "entries/pages/(authed)/unlockvault/_page@.svelte.js",
+    "name": "entries/pages/(authed)/unlockvault/_page@.svelte",
+    "src": "src/routes/(authed)/unlockvault/+page@.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ssr.js",
+      "_client.js",
+      "_InputBox.js",
+      "_session.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page@.BxQ4N8Tq.css"
+    ]
+  },
+  "src/routes/confirmlock/+page.svelte": {
+    "file": "entries/pages/confirmlock/_page.svelte.js",
+    "name": "entries/pages/confirmlock/_page.svelte",
+    "src": "src/routes/confirmlock/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ssr.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.BR6Usbeg.css"
+    ]
+  },
+  "src/routes/confirmlock/+page.ts": {
+    "file": "entries/pages/confirmlock/_page.ts.js",
+    "name": "entries/pages/confirmlock/_page.ts",
+    "src": "src/routes/confirmlock/+page.ts",
+    "isEntry": true,
+    "imports": [
+      "_client.js",
+      "_session.js"
     ]
   },
   "src/routes/login/+page.svelte": {
@@ -112,10 +292,22 @@
     "imports": [
       "_ssr.js",
       "_client.js",
-      "_axios.js"
+      "_RecoveryKey.js",
+      "_Modal.js",
+      "_session.js"
     ],
     "css": [
-      "_app/immutable/assets/_page.vHzbCXD6.css"
+      "_app/immutable/assets/_page.Cfm4x7Z9.css"
+    ]
+  },
+  "src/routes/login/+page.ts": {
+    "file": "entries/pages/login/_page.ts.js",
+    "name": "entries/pages/login/_page.ts",
+    "src": "src/routes/login/+page.ts",
+    "isEntry": true,
+    "imports": [
+      "_client.js",
+      "_session.js"
     ]
   },
   "src/routes/register/+page.svelte": {
@@ -126,32 +318,82 @@
     "imports": [
       "_ssr.js",
       "_client.js",
-      "_axios.js"
-    ]
-  },
-  "src/routes/vault/+page.svelte": {
-    "file": "entries/pages/vault/_page.svelte.js",
-    "name": "entries/pages/vault/_page.svelte",
-    "src": "src/routes/vault/+page.svelte",
-    "isEntry": true,
-    "imports": [
-      "_utils.js",
-      "_ssr.js",
-      "_axios.js",
-      "_stores.js",
-      "_client.js"
+      "_session.js"
     ],
     "css": [
-      "_app/immutable/assets/_page.DvDGbhwd.css"
+      "_app/immutable/assets/_page.BPIqPJ20.css"
     ]
   },
-  "src/routes/vault/+page.ts": {
-    "file": "entries/pages/vault/_page.ts.js",
-    "name": "entries/pages/vault/_page.ts",
-    "src": "src/routes/vault/+page.ts",
+  "src/routes/register/+page.ts": {
+    "file": "entries/pages/register/_page.ts.js",
+    "name": "entries/pages/register/_page.ts",
+    "src": "src/routes/register/+page.ts",
     "isEntry": true,
     "imports": [
-      "_axios.js"
+      "_client.js",
+      "_session.js"
     ]
+  },
+  "src/routes/register/confirm/+page.svelte": {
+    "file": "entries/pages/register/confirm/_page.svelte.js",
+    "name": "entries/pages/register/confirm/_page.svelte",
+    "src": "src/routes/register/confirm/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ssr.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.B6ldKOJt.css"
+    ]
+  },
+  "src/routes/register/confirm/+page.ts": {
+    "file": "entries/pages/register/confirm/_page.ts.js",
+    "name": "entries/pages/register/confirm/_page.ts",
+    "src": "src/routes/register/confirm/+page.ts",
+    "isEntry": true,
+    "imports": [
+      "_session.js"
+    ]
+  },
+  "src/routes/requestlock/+page.svelte": {
+    "file": "entries/pages/requestlock/_page.svelte.js",
+    "name": "entries/pages/requestlock/_page.svelte",
+    "src": "src/routes/requestlock/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ssr.js",
+      "_session.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.C4YrLed0.css"
+    ]
+  },
+  "src/routes/requestlock/+page.ts": {
+    "file": "entries/pages/requestlock/_page.ts.js",
+    "name": "entries/pages/requestlock/_page.ts",
+    "src": "src/routes/requestlock/+page.ts",
+    "isEntry": true
+  },
+  "src/routes/resetpw/+page.svelte": {
+    "file": "entries/pages/resetpw/_page.svelte.js",
+    "name": "entries/pages/resetpw/_page.svelte",
+    "src": "src/routes/resetpw/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_ssr.js",
+      "_InputBox.js",
+      "_RecoveryKey.js",
+      "_Modal.js",
+      "_session.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.Cmm-KQ1H.css"
+    ]
+  },
+  "src/routes/resetpw/+page.ts": {
+    "file": "entries/pages/resetpw/_page.ts.js",
+    "name": "entries/pages/resetpw/_page.ts",
+    "src": "src/routes/resetpw/+page.ts",
+    "isEntry": true
   }
 }

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { invalidateAll } from "$app/navigation";
   import { axiosInstance } from "$lib/interceptors/axios";
   import { hashMasterPassword } from "$lib/key";
 
@@ -21,7 +20,7 @@
       })
       .catch((reason) => {
         // console.error(reason);
-        invalidateAll().then(() => (error = true));
+        error = true;
       });
   };
 </script>

@@ -7,7 +7,8 @@
   } from "$lib/key";
   import InputBox from "$lib/components/InputBox.svelte";
   import { axiosInstance } from "$lib/interceptors/axios";
-  import { getSalt } from "$lib/session";
+  import { getSalt, setRefreshToken, setSalt, setToken } from "$lib/session";
+  import { goto } from "$app/navigation";
 
   export let isOpen: boolean;
   export let username = "";
@@ -16,10 +17,22 @@
 
   let error: string = "";
 
+  const logout = async () => {
+    await axiosInstance.post("/auth/account/logout");
+
+    setSalt("");
+    setToken("");
+    setRefreshToken("");
+
+    axiosInstance.defaults.headers.common["Authorization"] = "";
+
+    await goto("/login");
+  };
+
   const handleSubmit = async () => {
     username = (await axiosInstance.get("/auth/account/user")).data;
     const salt = await getSalt(username);
-    const hash = await hashMasterPassword(
+    const oldHash = await hashMasterPassword(
       username,
       currentMasterPassword,
       salt
@@ -28,20 +41,21 @@
       const response = await axiosInstance.post(
         "/auth/account/user/encryptionKey",
         {
-          hash: hash.hashPW,
+          hash: oldHash.hashPW,
         }
       );
       if (response.status === 200) {
-        const { privateKeyMaster, iv, salt } = response.data;
+        const { privateKeyMaster, iv } = response.data;
         const decryptedPrivateKey = await decryptPrivateKey(
           privateKeyMaster,
           currentMasterPassword,
           salt,
           iv
         );
-        const { hashPW } = await hashMasterPassword(
+        const newHash = await hashMasterPassword(
           username,
-          newMasterPassword
+          newMasterPassword,
+          salt
         );
         const reencryptedPrivateKeyMaster = await encryptPrivateKey(
           decryptedPrivateKey,
@@ -55,13 +69,14 @@
           "auth/account/user/updatepw",
           {
             privateKeyMaster: reencryptedPrivateKeyMaster,
-            oldPassword: hash.hashPW,
-            newPassword: hashPW,
+            oldPassword: oldHash.hashPW,
+            newPassword: newHash.hashPW,
             salt,
           }
         );
         if (updateAttempt.status === 200) {
           isOpen = false;
+          goto("/login");
         }
       }
     } catch (reason) {

@@ -1,4 +1,4 @@
-import { goto, invalidateAll } from "$app/navigation";
+import { goto } from "$app/navigation";
 import {
   getRefreshToken,
   readToken,
@@ -9,13 +9,17 @@ import {
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import * as jose from "jose";
 
-export const axiosInstance = axios.create({
+const isBrowser =
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
+const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-axiosInstance.defaults.headers.common[
-  "Authorization"
-] = `Bearer ${readToken()}`;
+if (isBrowser)
+  axiosInstance.defaults.headers.common[
+    "Authorization"
+  ] = `Bearer ${readToken()}`;
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
@@ -31,7 +35,6 @@ const refreshTokenIfNeeded = async (): Promise<string | null> => {
       setToken(response.data.access_token);
       setSalt(response.data.salt);
       setRefreshToken(response.data.refresh_token);
-      invalidateAll();
       return response.data.access_token;
     }
   } catch (error) {
@@ -39,7 +42,6 @@ const refreshTokenIfNeeded = async (): Promise<string | null> => {
     setToken("");
     setSalt("");
     setRefreshToken("");
-    invalidateAll();
     goto("/login");
   }
   return null;
@@ -111,3 +113,4 @@ const createAxiosInterceptors = () => {
 };
 
 createAxiosInterceptors();
+export { axiosInstance };

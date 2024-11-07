@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { invalidateAll } from "$app/navigation";
-
   export let isOpen: boolean;
 
   export let question: string;
@@ -16,7 +14,6 @@
     class="yes"
     on:click={() => {
       callback();
-      invalidateAll();
     }}>Yes</button
   >
   <button class="no" on:click={() => (isOpen = false)}>No</button>

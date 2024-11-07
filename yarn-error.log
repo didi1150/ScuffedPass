@@ -1,0 +1,56 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Users\dezho\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js install
+
+PATH: 
+  C:\Program Files\Zulu\zulu-17\bin\;C:\Python310\Scripts\;C:\Python310\;C:\Program Files\Zulu\zulu-17\\bin;C:\windows\system32;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\Program Files\Microsoft SQL Server\150\Tools\Binn\;C:\ProgramData\chocolatey\bin;C:\Program Files\nodejs\;C:\Program Files\dotnet\;C:\Strawberry\c\bin;C:\Strawberry\perl\site\bin;C:\Strawberry\perl\bin;C:\Program Files\Go\bin;C:\Program Files\WireGuard\;C:\Program Files\Rancher Desktop\resources\resources\win32\bin\;C:\Program Files\Rancher Desktop\resources\resources\win32\docker-cli-plugins\;C:\Program Files\Rancher Desktop\resources\resources\linux\bin\;C:\Program Files\Rancher Desktop\resources\resources\linux\docker-cli-plugins\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\wooting-analog-sdk\;C:\Program Files\PuTTY\;C:\Program Files (x86)\cloudflared\;C:\Program Files\Git\cmd;C:\Users\dezho\AppData\Local\Microsoft\WindowsApps;C:\Users\dezho\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\dezho\AppData\Roaming\npm;C:\Users\dezho\AppData\Local\JetBrains\PyCharm Community Edition 2023.1.1\bin;;C:\Users\dezho\AppData\Local\Programs\MiKTeX\miktex\bin\x64\;C:\texlive\2023\bin\windows;C:\Users\dezho\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin;C:\Dev\flutter\bin;C:\Users\dezho\AppData\Local\Android\Sdk\cmdline-tools\latest\bin;C:\Users\dezho\AppData\Local\Android\Sdk\platform-tools;C:\Users\dezho\go\bin;C:\Dev\kubernetes-tools;;C:\Program Files\JetBrains\JetBrains Rider 2024.2.6\bin;
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  18.14.2
+
+Platform: 
+  win32 x64
+
+Trace: 
+  Error: EPERM: operation not permitted, unlink 'C:\Users\dezho\OneDrive\Desktop\Website\PWFrontend\SvelteFrontEnd\node_modules\@esbuild\win32-x64\esbuild.exe'
+
+npm manifest: 
+  {
+  	"name": "sveltefrontend",
+  	"version": "0.0.1",
+  	"private": true,
+  	"scripts": {
+  		"dev": "vite dev",
+  		"build": "vite build",
+  		"preview": "vite preview",
+  		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+  		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+  	},
+  	"devDependencies": {
+  		"@sveltejs/adapter-auto": "^3.0.0",
+  		"@sveltejs/kit": "^2.0.0",
+  		"@sveltejs/vite-plugin-svelte": "^3.0.0",
+  		"@types/bcryptjs": "^2.4.6",
+  		"@types/js-cookie": "^3.0.6",
+  		"svelte": "^4.2.7",
+  		"svelte-check": "^3.6.0",
+  		"tslib": "^2.4.1",
+  		"typescript": "^5.0.0",
+  		"vite": "^5.0.3"
+  	},
+  	"type": "module",
+  	"dependencies": {
+  		"axios": "^1.7.4",
+  		"bcryptjs": "^2.4.3",
+  		"cookies": "^0.9.1",
+  		"jose": "^5.9.2"
+  	}
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
