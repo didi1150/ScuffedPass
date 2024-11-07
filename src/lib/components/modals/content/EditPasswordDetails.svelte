@@ -39,6 +39,7 @@
       email.length == 0
     ) {
       error = "Please fill out all details";
+      return;
     }
 
     const username = (await axiosInstance.get("/auth/account/user")).data;
