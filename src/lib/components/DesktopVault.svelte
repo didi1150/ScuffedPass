@@ -14,12 +14,14 @@
   let selectedPasswordID: number;
 
   tableData.forEach(async (value) => {
-    let decryptedPW = await decryptData(
-      value.password,
-      value.iv,
-      getSymmetricKey()
-    );
-    decryptedPasswords.push({ password: decryptedPW, id: value.passwordID });
+    try {
+      let decryptedPW = await decryptData(
+        value.password,
+        value.iv,
+        getSymmetricKey(),
+      );
+      decryptedPasswords.push({ password: decryptedPW, id: value.passwordID });
+    } catch (error) {}
   });
 
   const getDecryptedPassword = (id: number) => {
