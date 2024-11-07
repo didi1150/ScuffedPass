@@ -42,6 +42,11 @@
       return;
     }
 
+    const allIVFieldsFilled =
+      password.trim().length !== 0 &&
+      repeat.trim().length !== 0 &&
+      website.trim().length !== 0;
+
     const username = (await axiosInstance.get("/auth/account/user")).data;
 
     const salt = await getSalt(username);
@@ -55,13 +60,17 @@
             .then((decryptedPrivateKey) => {
               decryptSymmetricKeyWithPrivateKey(
                 encryptionKey,
-                decryptedPrivateKey
+                decryptedPrivateKey,
               ).then(async (symmetricKey) => {
-                const enc_website = await encryptData(website, symmetricKey);
+                const enc_website = await encryptData(
+                  website,
+                  symmetricKey,
+                  allIVFieldsFilled ? iv : null,
+                );
                 encryptData(
                   password,
                   symmetricKey,
-                  base64ToUint8Array(enc_website.iv)
+                  base64ToUint8Array(enc_website.iv),
                 ).then((value) => {
                   if (!value) error = "The master password is incorrect";
                   else {
@@ -71,7 +80,7 @@
                         website: enc_website.encryptedData,
                         email,
                         password: value.encryptedData,
-                        iv: enc_website.iv,
+                        iv: allIVFieldsFilled ? enc_website.iv : "",
                       })
                       .then((res) => {
                         if (res.status === 200) {
@@ -79,7 +88,7 @@
                           const targetIndex = data.findIndex(
                             (passwordValue) => {
                               return passwordValue.passwordID === passwordID;
-                            }
+                            },
                           );
 
                           data[targetIndex] = {
@@ -87,7 +96,7 @@
                               email.length !== 0
                                 ? email
                                 : data[targetIndex].email,
-                            iv: enc_website.iv,
+                            iv: allIVFieldsFilled ? enc_website.iv : "",
                             password: value.encryptedData
                               ? value.encryptedData
                               : data[targetIndex].password,

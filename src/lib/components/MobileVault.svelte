@@ -32,7 +32,7 @@
   let showCopyToolTip = -1;
   let tooltipTimer: number;
   const handleCopy = async (passwordID: number) => {
-    clearTimeout(tooltipTimer);
+    if (tooltipTimer === -1) clearTimeout(tooltipTimer);
     let pw = getDecryptedPassword(passwordID);
     if (!pw) {
       copyToolTip = "Error: Couldn't decrypt password";
