@@ -6,6 +6,7 @@
     decryptSymmetricKeyWithPrivateKey,
     encryptData,
     hashMasterPassword,
+    isStringEmpty,
   } from "$lib/key";
   import InputBox from "$lib/components/InputBox.svelte";
   import { getSalt } from "$lib/session";
@@ -31,87 +32,81 @@
       error = "Please confirm the password you are trying to use";
       return;
     }
-
-    if (
-      password.length == 0 &&
-      repeat.length == 0 &&
-      website.length == 0 &&
-      email.length == 0
-    ) {
+    const passwordEmpty = isStringEmpty(password);
+    const repeatEmpty = isStringEmpty(repeat);
+    const websiteEmpty = isStringEmpty(website);
+    const emailEmpty = isStringEmpty(email);
+    if (passwordEmpty && repeatEmpty && websiteEmpty && emailEmpty) {
       error = "Please fill out all details";
       return;
     }
+    try {
+      const username = (await axiosInstance.get("/auth/account/user")).data;
 
-    const username = (await axiosInstance.get("/auth/account/user")).data;
+      const salt = await getSalt(username);
+      const { hashPW } = await hashMasterPassword(
+        username,
+        masterPassword,
+        salt
+      );
 
-    const salt = await getSalt(username);
-    const { hashPW } = await hashMasterPassword(username, masterPassword, salt);
-    axiosInstance
-      .post("/auth/account/user/encryptionKey", { hash: hashPW })
-      .then((response) => {
-        if (response.status === 200) {
-          const { encryptionKey, privateKeyMaster, iv } = response.data;
-          decryptPrivateKey(privateKeyMaster, masterPassword, salt, iv)
-            .then((decryptedPrivateKey) => {
-              decryptSymmetricKeyWithPrivateKey(
-                encryptionKey,
-                decryptedPrivateKey,
-              ).then(async (symmetricKey) => {
-                const enc_website = await encryptData(
-                  website,
-                  symmetricKey,
-                  iv,
-                );
-                encryptData(
-                  password,
-                  symmetricKey,
-                  base64ToUint8Array(enc_website.iv),
-                ).then((value) => {
-                  if (!value) error = "The master password is incorrect";
-                  else {
-                    axiosInstance
-                      .patch("/vault", {
-                        id: passwordID,
-                        website: enc_website.encryptedData,
-                        email,
-                        password: value.encryptedData,
-                        iv,
-                      })
-                      .then((res) => {
-                        if (res.status === 200) {
-                          isOpen = false;
-                          const targetIndex = data.findIndex(
-                            (passwordValue) => {
-                              return passwordValue.passwordID === passwordID;
-                            },
-                          );
+      const { encryptionKey, privateKeyMaster, iv } = (
+        await axiosInstance.post("/auth/account/user/encryptionKey", {
+          hash: hashPW,
+        })
+      ).data;
+      const decryptedPrivateKey = await decryptPrivateKey(
+        privateKeyMaster,
+        masterPassword,
+        salt,
+        iv
+      );
+      const password_iv = (await axiosInstance.get(`/vault/${passwordID}`))
+        .data;
+      const symmetricKey = await decryptSymmetricKeyWithPrivateKey(
+        encryptionKey,
+        decryptedPrivateKey
+      );
+      const enc_website = await encryptData(
+        website,
+        symmetricKey,
+        base64ToUint8Array(password_iv)
+      );
+      const value = await encryptData(
+        password,
+        symmetricKey,
+        base64ToUint8Array(password_iv)
+      );
+      if (!value) error = "The master password is incorrect";
+      else {
+        const res = await axiosInstance.patch("/vault", {
+          id: passwordID,
+          website: websiteEmpty ? "" : enc_website.encryptedData,
+          email: emailEmpty ? "" : email,
+          password: passwordEmpty ? "" : value.encryptedData,
+        });
+        if (res.status === 200) {
+          isOpen = false;
+          const targetIndex = data.findIndex((passwordValue) => {
+            return passwordValue.passwordID === passwordID;
+          });
 
-                          data[targetIndex] = {
-                            email:
-                              email.length !== 0
-                                ? email
-                                : data[targetIndex].email,
-                            iv: iv,
-                            password: value.encryptedData
-                              ? value.encryptedData
-                              : data[targetIndex].password,
-                            websiteURL:
-                              website.length !== 0
-                                ? website
-                                : data[targetIndex].websiteURL,
-                            passwordID,
-                          };
-                          data = [...data];
-                        }
-                      });
-                  }
-                });
-              });
-            })
-
-            .catch(() => (error = "The master password is incorrect"));
+          data[targetIndex] = {
+            email: !emailEmpty ? email : data[targetIndex].email,
+            iv: password_iv,
+            password: !passwordEmpty
+              ? value.encryptedData
+              : data[targetIndex].password,
+            websiteURL: !websiteEmpty ? website : data[targetIndex].websiteURL,
+            passwordID,
+          };
+          data = [...data];
+          return;
         }
-      });
+      }
+    } catch (reason) {
+      error = "Invalid Master Password";
+    }
   };
 </script>
 

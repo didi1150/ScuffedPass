@@ -17,20 +17,20 @@
   export let data: { responseArray: Password[] };
   let websitesDecrypted = false;
 
-  $: {
-    if (data && isBrowser) {
-      decryptWebsites();
-    }
+  $: if (data && isBrowser && !websitesDecrypted) {
+    decryptWebsites();
   }
 
   const decryptWebsites = () => {
-    if (!data) return;
+    const symmetricKey = getSymmetricKey();
     data.responseArray.map(async (item) => {
-      item.websiteURL = await decryptData(
-        item.websiteURL,
-        item.iv,
-        getSymmetricKey()
-      );
+      try {
+        item.websiteURL = await decryptData(
+          item.websiteURL,
+          item.iv,
+          symmetricKey
+        );
+      } catch (error) {}
     });
     // For reactivity
     setTimeout(() => {
@@ -56,10 +56,10 @@
   </Modal>
   {#if websitesDecrypted}
     <MediaQuery query={mobileQuery}>
-      <MobileVault tableData={data.responseArray}></MobileVault>
+      <MobileVault bind:tableData={data.responseArray}></MobileVault>
     </MediaQuery>
     <MediaQuery query={desktopQuery}>
-      <DesktopVault tableData={data.responseArray}></DesktopVault>
+      <DesktopVault bind:tableData={data.responseArray}></DesktopVault>
     </MediaQuery>
   {/if}
   <button

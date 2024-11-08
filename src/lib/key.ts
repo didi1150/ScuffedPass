@@ -4,7 +4,7 @@ import { genSalt } from "$lib/gensalt";
 const isBrowser =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
-const isStringEmpty = (input: string) => {
+export const isStringEmpty = (input: string) => {
   return !input || input.trim() === "";
 }
 
